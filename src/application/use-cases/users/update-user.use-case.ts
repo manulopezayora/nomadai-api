@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,7 +11,10 @@ import { UserRole } from '../../../domain/enums/user-role.enum';
 
 @Injectable()
 export class UpdateUserUseCase {
-  constructor(private readonly userRepository: UserRepositoryPort) {}
+  constructor(
+    @Inject(UserRepositoryPort)
+    private readonly userRepository: UserRepositoryPort,
+  ) {}
 
   async execute(
     id: string,

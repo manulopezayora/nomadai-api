@@ -161,7 +161,7 @@ Database
 - **No lógica de negocio en controllers ni services de infraestructura**
 - **Una función = un archivo** para casos de uso (cuando son simples)
 - **Functional pipes** en lugar de clases cuando sea posible
-- **DTOs con class-validator** para validación declarativa
+- **DTOs con class-validator** para validación declarativa (ver nota tsx abajo)
 - **No usar `any`** — usar tipos específicos siempre
 - **Nombres descriptivos**: `createTripUseCase`, no `create` o `svc`
 - **Archivos kebab-case**: `create-trip.use-case.ts`, no `createTripUseCase.ts`
@@ -389,6 +389,92 @@ Por eso `@ApiBody({ type: RegisterDto })` causa un error de dependencia circular
 - [ ] `@ApiBody({ schema: {...} })` con **schema inline** (NO `type: DtoClass`) para endpoints con body
 - [ ] `@ApiProperty` / `@ApiPropertyOptional` en todos los campos del DTO
 - [ ] `examples` en properties para documentación clara
+
+---
+
+## Limitaciones de tsx/esbuild (CRÍTICO)
+
+El proyecto usa **tsx** (basado en esbuild) para hot-reload en Docker. Esto tiene
+implicaciones importantes que debes conocer:
+
+### 1. `@Inject()` EXPLícito en TODOS los constructores
+
+tsx **NO emite `emitDecoratorMetadata`**, así que NestJS no puede resolver
+parámetros del constructor automáticamente. **SIEMPRE usar `@Inject()`**:
+
+```typescript
+// ❌ INCORRECTO - falla silenciosamente (use case = undefined)
+constructor(
+  private readonly userRepository: UserRepositoryPort,
+) {}
+
+// ✅ CORRECTO - funciona con tsx
+constructor(
+  @Inject(UserRepositoryPort)
+  private readonly userRepository: UserRepositoryPort,
+) {}
+```
+
+Esto aplica a:
+- **Controllers**: `@Inject(UseCase)` en cada caso de uso
+- **Use Cases**: `@Inject(Port)` en cada puerto/repositorio
+- **Guards**: `@Inject(Reflector)` si usan Reflector
+- **Repositories**: `@Inject(PrismaService)` si usan Prisma
+- **Strategies**: `@Inject(Service)` si usan servicios
+
+**Incluso si la clase es un token directo** (no abstracto), usar `@Inject()`.
+
+### 2. `class-validator` NO funciona automáticamente
+
+Los decoradores de validación (`@IsEmail`, `@MinLength`, etc.) **no se ejecutan**
+porque esbuild no preserva metadata de decoradores. El `ValidationPipe` global
+funciona pero **NO valida restricciones de DTOs**.
+
+**Solución: Agregar validación manual en el use case**:
+
+```typescript
+async execute(dto: RegisterDto): Promise<User> {
+  if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
+    throw new BadRequestException('Invalid email format');
+  }
+  if (!dto.password || dto.password.length < 8) {
+    throw new BadRequestException('Password must be at least 8 characters');
+  }
+  // ... resto de la lógica
+}
+```
+
+Los DTOs conservan los decoradores de `class-validator` y `@ApiProperty` de
+Swagger para documentación, pero **la validación real va en el use case**.
+
+### 3. `@ApiBody({ type: DtoClass })` causa circular dependency
+
+Usar **schemas inline** en lugar de referenciar clases DTO:
+
+```typescript
+// ❌ INCORRECTO - error circular con tsx
+@ApiBody({ type: RegisterDto })
+
+// ✅ CORRECTO - schema inline
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email', example: 'user@example.com' },
+      password: { type: 'string', minLength: 8, example: 'password123' },
+    },
+  },
+})
+```
+
+### Resumen de reglas para nuevos módulos
+
+1. **Siempre** `@Inject()` en constructores (todos los parámetros)
+2. **Siempre** validación manual en use cases (no depender de class-validator)
+3. **Siempre** `@ApiBody({ schema: {...} })` inline (no `type: DtoClass`)
+4. **Nunca** usar `@Body(new ValidationPipe(...))` en controllers (el global ya existe)
+5. Los DTOs sirven para **documentación Swagger** y **tipado TS**, no para validación
 
 ---
 

@@ -1,11 +1,11 @@
 import {
   Controller,
   Get,
+  Inject,
   Param,
   Patch,
   Body,
   UseGuards,
-  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,7 +30,9 @@ import { UpdateUserDto } from '../../application/dto/update-user.dto';
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
+    @Inject(ListUsersUseCase)
     private readonly listUsersUseCase: ListUsersUseCase,
+    @Inject(UpdateUserUseCase)
     private readonly updateUserUseCase: UpdateUserUseCase,
   ) {}
 
@@ -75,8 +77,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async update(
     @Param('id') id: string,
-    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    dto: UpdateUserDto,
+    @Body() dto: UpdateUserDto,
     @CurrentUser() user: { userId: string; role: UserRole },
   ) {
     return this.updateUserUseCase.execute(id, dto, user);

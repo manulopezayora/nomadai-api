@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { RegisterDto } from '../../dto/register.dto';
@@ -6,9 +6,20 @@ import { User } from '../../../domain/entities/user.entity';
 
 @Injectable()
 export class RegisterUseCase {
-  constructor(private readonly userRepository: UserRepositoryPort) {}
+  constructor(
+    @Inject(UserRepositoryPort)
+    private readonly userRepository: UserRepositoryPort,
+  ) {}
 
   async execute(dto: RegisterDto): Promise<User> {
+    if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
+      throw new BadRequestException('Invalid email format');
+    }
+
+    if (!dto.password || dto.password.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
+    }
+
     const existingUser = await this.userRepository.findByEmail(dto.email);
 
     if (existingUser) {

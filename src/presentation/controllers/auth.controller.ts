@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Post,
   UseGuards,
-  ValidationPipe,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,7 +25,9 @@ import type { UserPayload } from '../../shared/types/user-payload';
 @Controller('auth')
 export class AuthController {
   constructor(
+    @Inject(RegisterUseCase)
     private readonly registerUseCase: RegisterUseCase,
+    @Inject(LoginUseCase)
     private readonly loginUseCase: LoginUseCase,
   ) {}
 
@@ -45,10 +47,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
-  async register(
-    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    dto: RegisterDto,
-  ) {
+  async register(@Body() dto: RegisterDto) {
     const user = await this.registerUseCase.execute(dto);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = user;
@@ -69,10 +68,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: 'Login successful, returns JWT' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(
-    @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-    dto: LoginDto,
-  ) {
+  async login(@Body() dto: LoginDto) {
     return this.loginUseCase.execute(dto);
   }
 
