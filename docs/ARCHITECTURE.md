@@ -39,6 +39,7 @@ y hoteles recomendados.
 | **Config** | @nestjs/config + Joi | ^4.0.0 | Variables de entorno seguras |
 | **Testing** | Jest + Supertest | ^30.0.0 | Unit + E2E |
 | **Linting** | ESLint + Prettier | ^9.18.0 | Ya configurado |
+| **API Docs** | @nestjs/swagger | ^11.4.6 | OpenAPI 3.0 docs en `/api` |
 | **Mapas (fase 2)** | Leaflet + OpenStreetMap | - | Gratuito, sin API key (alternativa a Google Maps) |
 | **Package Manager** | pnpm | - | Con workspace |
 
@@ -217,6 +218,15 @@ Cada ubicación específica que se renderizará en el mapa.
 
 ## API Endpoints
 
+### Documentación Swagger/OpenAPI
+
+La documentación interactiva de la API está disponible en:
+- **URL**: `http://localhost:3000/api`
+- **Formato**: OpenAPI 3.0
+- **Autenticación**: Bearer token (JWT) para endpoints protegidos
+
+Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiProperty`) para generar documentación completa y automáticamente actualizada.
+
 ### Auth
 
 | Método | Ruta | Descripción | Auth |
@@ -318,6 +328,7 @@ pnpm add bcryptjs cookie-parser
 pnpm add @google/genai
 pnpm add class-validator class-transformer
 pnpm add @nestjs/throttler
+pnpm add @nestjs/swagger
 pnpm add reflect-metadata rxjs
 ```
 
@@ -405,6 +416,7 @@ nomadai-api/
 | 3 | **Config** — Variables de entorno validadas con Joi | 2 |
 | 4 | **Users** — CRUD básico | 3 |
 | 5 | **Auth** — Register/Login + Google OAuth + JWT | ~10 |
+| 5b | **Swagger** — Documentación API con @nestjs/swagger | 3 |
 | 6 | **Trips** — CRUD de viajes | 4 |
 | 7 | **Day Plans + Activities** — Planificación día a día con lat/lng | 5 |
 | 8 | **Gemini Module** — Integración con Google Gemini | 5 |

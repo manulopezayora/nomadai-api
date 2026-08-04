@@ -288,6 +288,8 @@ export class TripMapper {
 
 ```typescript
 // presentation/controllers/trips.controller.ts
+@ApiTags('Trips')
+@ApiBearerAuth()
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
@@ -297,6 +299,9 @@ export class TripsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new trip' })
+  @ApiResponse({ status: 201, description: 'Trip created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@CurrentUser() user: UserPayload, @Body() dto: CreateTripDto) {
     return this.createTripUseCase.execute(dto, user.userId);
   }
@@ -318,6 +323,32 @@ export class TripsController {
 })
 export class TripsModule {}
 ```
+
+### 7. Documentación Swagger (OBLIGATORIO para cada módulo)
+
+**Cada controller y DTO nuevo DEBE incluir decoradores de Swagger.**
+
+```typescript
+// En el controller:
+@ApiTags('Trips')                    // Agrupa endpoints en Swagger UI
+@ApiBearerAuth()                     // Indica que requiere JWT
+@ApiOperation({ summary: '...' })    // Descripción del endpoint
+@ApiResponse({ status: 200, ... })   // Cada respuesta posible
+@ApiParam({ name: 'id', ... })       // Parámetros de ruta
+
+// En los DTOs:
+@ApiProperty({ example: '...' })             // Propiedades requeridas
+@ApiPropertyOptional({ example: '...' })     // Propiedades opcionales
+```
+
+**Checklist de documentación por módulo:**
+- [ ] `@ApiTags('NombreDelModulo')` en el controller
+- [ ] `@ApiBearerAuth()` en controllers protegidos
+- [ ] `@ApiOperation` en cada endpoint
+- [ ] `@ApiResponse` para cada código de estado (200, 201, 400, 401, 403, 404)
+- [ ] `@ApiParam` para parámetros de ruta
+- [ ] `@ApiProperty` / `@ApiPropertyOptional` en todos los campos del DTO
+- [ ] `examples` en properties para documentación clara
 
 ---
 
