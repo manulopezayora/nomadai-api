@@ -402,6 +402,86 @@ nomadai-api/
 
 ---
 
+## Docker (Desarrollo Local)
+
+### Archivos Docker
+
+| Archivo | Propósito |
+|---------|-----------|
+| `Dockerfile` | Build multi-stage para producción (deps → build → runner) |
+| `Dockerfile.dev` | Imagen de desarrollo con hot-reload |
+| `docker-compose.yml` | Composición: app + PostgreSQL |
+| `.dockerignore` | Excluir archivos del contexto Docker |
+| `.env.example` | Template de variables de entorno (se sube a git) |
+| `.env.docker` | Variables para Docker (gitignored) |
+
+### Servicios
+
+| Servicio | Imagen | Puerto | Descripción |
+|----------|--------|--------|-------------|
+| **postgres** | `postgres:16-alpine` | 5432 | Base de datos con volumen persistente |
+| **app** | `node:22-alpine` (custom) | 3000, 9229 | NestJS con hot-reload |
+
+### Comandos
+
+```bash
+# Primera vez: levantar todo
+docker compose up --build
+
+# En segundo plano
+docker compose up -d
+
+# Ver logs
+docker compose logs -f app
+
+# Parar todo
+docker compose down
+
+# Resetear base de datos
+docker compose down -v
+
+# Rebuild después de cambiar package.json
+docker compose up --build
+
+# Shell en el container de la app
+docker exec -it nomadai-app sh
+
+# Shell en PostgreSQL
+docker exec -it nomadai-postgres psql -U postgres -d nomadai
+
+# Prisma Studio (GUI en localhost:5555)
+docker exec -it nomadai-app pnpm prisma studio
+
+# Crear migración
+docker exec -it nomadai-app pnpm prisma migrate dev --name nombre_migracion
+```
+
+### Variables de Entorno para Docker
+
+**IMPORTANTE:** Dentro de Docker, `localhost` se refiere al container, NO al host.
+El `DATABASE_URL` debe usar el nombre del servicio Docker como hostname:
+
+```env
+# Dentro de Docker: usar "postgres" como host
+DATABASE_URL="postgresql://postgres:postgres@postgres:5432/nomadai?schema=public"
+
+# Fuera de Docker (local): usar "localhost"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nomadai?schema=public"
+```
+
+### Gotchas Evitados
+
+| Problema | Solución |
+|----------|----------|
+| `node_modules` del host sobreescribe los del container | Volumen anónimo: `- /app/node_modules` |
+| Prisma no encuentra `musl` en Alpine | No instalar `libc6-compat` |
+| Builds no reproducibles | Usar `--frozen-lockfile` |
+| App arranca antes que la DB | `depends_on` con `condition: service_healthy` |
+| Container corre como root | Non-root user en Dockerfile de producción |
+| Secrets en el historial de git | `.env` en `.gitignore`, solo `.env.example` se sube |
+
+---
+
 ## Fases Futuras
 
 | Fase | Funcionalidad |
