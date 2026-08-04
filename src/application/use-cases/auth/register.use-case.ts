@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable, BadRequestException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { RegisterDto } from '../../dto/register.dto';

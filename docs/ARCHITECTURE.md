@@ -367,43 +367,113 @@ nomadai-api/
 ├── docs/
 │   └── ARCHITECTURE.md          # Este archivo
 ├── src/
-│   ├── main.ts
-│   ├── app.module.ts
-│   ├── config/
-│   │   └── env.validation.ts    # Validación de variables de entorno con Joi
-│   ├── prisma/
-│   │   ├── prisma.module.ts
-│   │   └── prisma.service.ts    # PrismaClient como Provider NestJS
-│   ├── auth/
-│   │   ├── auth.module.ts
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── dto/
-│   │   ├── strategies/
+│   ├── main.ts                  # Bootstrap, Swagger, ValidationPipe global
+│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users)
+│   │
+│   ├── domain/                  # NÚCLEO (sin dependencias externas)
+│   │   ├── entities/            # Interfaces de dominio puras
+│   │   │   ├── user.entity.ts
+│   │   │   ├── trip.entity.ts
+│   │   │   ├── day-plan.entity.ts
+│   │   │   ├── activity.entity.ts
+│   │   │   ├── flight-recommendation.entity.ts
+│   │   │   └── hotel-recommendation.entity.ts
+│   │   ├── enums/               # Enums de dominio
+│   │   │   ├── user-role.enum.ts
+│   │   │   ├── trip-status.enum.ts
+│   │   │   ├── activity-category.enum.ts
+│   │   │   └── travel-style.enum.ts
+│   │   ├── ports/               # Interfaces (puertos)
+│   │   │   ├── repositories/    # Puertos de salida (DRIVER)
+│   │   │   │   ├── user.repository.port.ts
+│   │   │   │   ├── trip.repository.port.ts
+│   │   │   │   └── ...
+│   │   │   └── services/        # Puertos de entrada (DRIVEN)
+│   │   │       ├── gemini.port.ts
+│   │   │       └── ...
+│   │   ├── value-objects/       # Objetos de valor (si aplica)
+│   │   └── exceptions/          # Excepciones de dominio
+│   │       └── trip-not-found.exception.ts
+│   │
+│   ├── application/             # CASOS DE USO (depende solo de domain)
+│   │   ├── use-cases/           # Un archivo por caso de uso
+│   │   │   ├── auth/
+│   │   │   │   ├── register.use-case.ts
+│   │   │   │   └── login.use-case.ts
+│   │   │   ├── users/
+│   │   │   │   ├── list-users.use-case.ts
+│   │   │   │   └── update-user.use-case.ts
+│   │   │   ├── trips/           # (pendiente - paso 6)
+│   │   │   ├── day-plans/       # (pendiente - paso 7)
+│   │   │   └── recommendations/ # (pendiente - paso 8-9)
+│   │   └── dto/                 # DTOs de entrada/salida
+│   │       ├── register.dto.ts
+│   │       ├── login.dto.ts
+│   │       ├── update-user.dto.ts
+│   │       ├── create-trip.dto.ts    # (pendiente)
+│   │       └── ...
+│   │
+│   ├── infrastructure/          # ADAPTADORES (implementa puertos)
+│   │   ├── database/
+│   │   │   ├── prisma/
+│   │   │   │   ├── prisma.module.ts      # Global PrismaModule
+│   │   │   │   ├── prisma.service.ts     # PrismaService con PrismaPg adapter
+│   │   │   │   └── mappers/              # Mappers Domain <-> Prisma
+│   │   │   │       ├── user.mapper.ts
+│   │   │   │       └── trip.mapper.ts    # (pendiente)
+│   │   │   └── repositories/
+│   │   │       ├── prisma-user.repository.ts
+│   │   │       ├── prisma-trip.repository.ts      # (pendiente)
+│   │   │       └── ...
+│   │   ├── auth/
+│   │   │   ├── auth.module.ts
+│   │   │   ├── strategies/
+│   │   │   │   ├── local.strategy.ts
+│   │   │   │   └── jwt.strategy.ts
+│   │   │   ├── guards/
+│   │   │   │   └── jwt-auth.guard.ts
+│   │   │   └── decorators/
+│   │   │       └── current-user.decorator.ts
+│   │   ├── users/
+│   │   │   └── users.module.ts
+│   │   └── ai/                  # (pendiente - paso 8)
+│   │       ├── gemini.module.ts
+│   │       ├── gemini.service.ts
+│   │       └── schemas/
+│   │
+│   ├── presentation/            # ADAPTADOR DE ENTRADA (HTTP)
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── users.controller.ts
+│   │   │   ├── trips.controller.ts       # (pendiente - paso 6)
+│   │   │   └── recommendations.controller.ts  # (pendiente - paso 9)
 │   │   ├── guards/
-│   │   └── decorators/
-│   ├── users/
-│   │   ├── users.module.ts
-│   │   ├── users.service.ts
-│   │   └── users.controller.ts
-│   ├── trips/
-│   │   ├── trips.module.ts
-│   │   ├── trips.controller.ts
-│   │   ├── trips.service.ts
-│   │   └── dto/
-│   └── gemini/
-│       ├── gemini.module.ts
-│       ├── gemini.service.ts
-│       ├── dto/
-│       ├── schemas/
-│       └── gemini-exception.filter.ts
-├── test/
-│   ├── app.e2e-spec.ts
-│   └── jest-e2e.json
+│   │   │   └── roles.guard.ts
+│   │   ├── decorators/
+│   │   │   └── roles.decorator.ts
+│   │   ├── interceptors/        # (pendiente)
+│   │   └── filters/             # (pendiente)
+│   │
+│   └── shared/                  # UTILIDADES COMPARTIDAS
+│       ├── config/
+│       │   └── env.validation.ts
+│       └── types/
+│           └── user-payload.ts
+│
 ├── prisma/
-│   └── schema.prisma
-├── .env
-├── .env.example
+│   ├── schema.prisma            # 6 modelos + UserRole enum
+│   ├── seed.ts                  # Seed script (admin user)
+│   └── migrations/              # Migraciones generadas
+│
+├── test/
+│   ├── app.e2e-spec.ts          # (pendiente)
+│   └── jest-e2e.json
+│
+├── .env                         # Variables de entorno (gitignored)
+├── .env.example                 # Template de .env
+├── docker-compose.yml           # PostgreSQL + NestJS app
+├── Dockerfile                   # Build de producción
+├── Dockerfile.dev               # Desarrollo con hot-reload
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.build.json
@@ -413,24 +483,83 @@ nomadai-api/
 └── pnpm-workspace.yaml
 ```
 
+### Reglas de dependencias (IMPORTANTE)
+
+```
+domain/          → NO depende de NADA (ni de Prisma, ni de NestJS, ni de nada externo)
+application/     → Depende SOLO de domain/
+infrastructure/  → Depende de domain/ y application/
+presentation/    → Depende de application/ (NUNCA directamente de infrastructure/)
+```
+
+Las flechas de dependencia van **siempre hacia adentro**. Nunca hacia afuera.
+
+### Ejemplo: Flujo de un caso de uso
+
+```
+HTTP Request
+  ↓
+Controller (presentation/)          ← Valida con DTO (schema inline Swagger)
+  ↓
+Use Case (application/)             ← Lógica de negocio pura + validación manual
+  ↓
+Repository Port (domain/ports/)     ← Interfaz abstracta (abstract class)
+  ↓
+Repository Impl (infrastructure/)   ← Implementación con Prisma
+  ↓
+Database
+```
+
 ---
 
 ## Plan de Implementación (Orden)
 
-| Paso | Descripción | Archivos aprox. |
-|------|-------------|-----------------|
-| 1 | **Documentación** — Crear docs/ARCHITECTURE.md | 1 |
-| 2 | **Prisma + DB** — Schema, PrismaService, migración inicial | 3 |
-| 2b | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin | 6 |
-| 3 | **Config** — Variables de entorno validadas con Joi | 2 |
-| 4 | **Users** — CRUD básico | 3 |
-| 5 | **Auth** — Register/Login + Google OAuth + JWT | ~10 |
-| 5b | **Swagger** — Documentación API con @nestjs/swagger | 3 |
-| 6 | **Trips** — CRUD de viajes | 4 |
-| 7 | **Day Plans + Activities** — Planificación día a día con lat/lng | 5 |
-| 8 | **Gemini Module** — Integración con Google Gemini | 5 |
-| 9 | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario) | 4 |
-| 10 | **Hardening** — Rate limiting, validación de env, filtros de excepción | 2 |
+| Paso | Descripción | Estado |
+|------|-------------|--------|
+| 1 | **Documentación** — Crear docs/ARCHITECTURE.md + AGENTS.md | ✅ Hecho |
+| 2 | **Prisma + DB** — Schema, PrismaService, migración inicial | ✅ Hecho |
+| 2b | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin | ✅ Hecho |
+| 3 | **Config** — Variables de entorno validadas con Joi | ✅ Hecho |
+| 4 | **Users** — CRUD básico | ✅ Hecho |
+| 5 | **Auth** — Register/Login + JWT | ✅ Hecho |
+| 5b | **Swagger** — Documentación API con @nestjs/swagger | ✅ Hecho |
+| 6 | **Trips** — CRUD de viajes | ⬜ Pendiente |
+| 7 | **Day Plans + Activities** — Planificación día a día con lat/lng | ⬜ Pendiente |
+| 8 | **Gemini Module** — Integración con Google Gemini | ⬜ Pendiente |
+| 9 | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario) | ⬜ Pendiente |
+| 10 | **Hardening** — Rate limiting, filtros de excepción, global exception filter | ⬜ Pendiente |
+
+### Estado actual (Paso 5b completado)
+
+**Módulos funcionando:**
+- `POST /auth/register` — Registro con validación manual (email, password)
+- `POST /auth/login` — Login con JWT (accessToken en body)
+- `GET /auth/profile` — Perfil del usuario autenticado
+- `GET /users` — Listar usuarios (solo ADMIN)
+- `PATCH /users/:id` — Actualizar perfil (propio o admin)
+
+**Credenciales de prueba:**
+| Email | Password | Rol |
+|-------|----------|-----|
+| `admin@nomadai.com` | `admin123` | ADMIN |
+| `test@test.com` | `testpass123` | USER |
+
+**Swagger UI:** `http://localhost:3000/api`
+
+**Acceso a DB:** `docker exec -it nomadai-postgres psql -U postgres -d nomadai`
+
+### Próximo paso: Trips CRUD (Paso 6)
+
+Crear en este orden:
+1. `src/domain/ports/repositories/trip.repository.port.ts` — Puerto
+2. `src/domain/exceptions/trip-not-found.exception.ts` — Excepción
+3. `src/application/dto/create-trip.dto.ts` — DTO de entrada
+4. `src/application/dto/update-trip.dto.ts` — DTO de actualización
+5. `src/application/use-cases/trips/*.use-case.ts` — Casos de uso
+6. `src/infrastructure/database/prisma/mappers/trip.mapper.ts` — Mapper
+7. `src/infrastructure/database/repositories/prisma-trip.repository.ts` — Repository
+8. `src/presentation/controllers/trips.controller.ts` — Controller
+9. Registrar módulo en `app.module.ts`
 
 ---
 
