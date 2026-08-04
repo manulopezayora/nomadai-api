@@ -52,6 +52,15 @@ y hoteles recomendados.
 | **Leaflet > Google Maps** | Google Maps SDK | Leaflet es gratuito, sin API key, open source. Google Maps requiere billing |
 | **Passport.js > custom auth** | Auth manual | Estándar de la industria, bien mantenido, múltiples estrategias |
 
+### Nota sobre Prisma 7 + tsx
+
+El proyecto usa `tsx` como runtime de desarrollo (en lugar de `nest start:watch`) para
+compatibilidad con Prisma 7 `prisma-client` generator que genera código ESM con `import.meta.url`.
+
+**Implicación para Swagger:** `tsx` usa `esbuild` que NO emite `emitDecoratorMetadata`.
+Por eso `@ApiBody({ type: DtoClass })` causa circular dependency. La solución es usar
+schemas inline: `@ApiBody({ schema: { ... } })`. Ver `AGENTS.md` para más detalles.
+
 ### Nota sobre Amadeus API
 
 Amadeus cerró su portal Self-Service API el 17 de julio de 2026. Ya no es una opción

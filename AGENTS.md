@@ -300,6 +300,16 @@ export class TripsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new trip' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'destination'],
+      properties: {
+        title: { type: 'string', example: 'Trip to Japan' },
+        destination: { type: 'string', example: 'Tokyo' },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Trip created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@CurrentUser() user: UserPayload, @Body() dto: CreateTripDto) {
@@ -341,12 +351,42 @@ export class TripsModule {}
 @ApiPropertyOptional({ example: '...' })     // Propiedades opcionales
 ```
 
+**⚠️ IMPORTANTE: `@ApiBody` con tsx/esbuild**
+
+El proyecto usa `tsx` (basado en esbuild) que **NO emite `emitDecoratorMetadata`**.
+Por eso `@ApiBody({ type: RegisterDto })` causa un error de dependencia circular:
+
+```
+[RegisterDto] A circular dependency has been detected (property key: "email")
+```
+
+**Solución: Usar schemas inline en `@ApiBody`** en lugar de referenciar clases DTO:
+
+```typescript
+// ❌ INCORRECTO - causa circular dependency con tsx
+@ApiBody({ type: RegisterDto })
+
+// ✅ CORRECTO - schema inline, funciona con tsx
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email', example: 'user@example.com' },
+      password: { type: 'string', minLength: 8, example: 'password123' },
+      firstName: { type: 'string', example: 'John' },
+    },
+  },
+})
+```
+
 **Checklist de documentación por módulo:**
 - [ ] `@ApiTags('NombreDelModulo')` en el controller
 - [ ] `@ApiBearerAuth()` en controllers protegidos
 - [ ] `@ApiOperation` en cada endpoint
 - [ ] `@ApiResponse` para cada código de estado (200, 201, 400, 401, 403, 404)
 - [ ] `@ApiParam` para parámetros de ruta
+- [ ] `@ApiBody({ schema: {...} })` con **schema inline** (NO `type: DtoClass`) para endpoints con body
 - [ ] `@ApiProperty` / `@ApiPropertyOptional` en todos los campos del DTO
 - [ ] `examples` en properties para documentación clara
 

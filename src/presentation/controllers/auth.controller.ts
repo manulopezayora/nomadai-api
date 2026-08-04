@@ -11,6 +11,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
@@ -30,6 +31,18 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email', 'password'],
+      properties: {
+        email: { type: 'string', format: 'email', example: 'user@example.com' },
+        password: { type: 'string', minLength: 8, example: 'password123' },
+        firstName: { type: 'string', example: 'John' },
+        lastName: { type: 'string', example: 'Doe' },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
   async register(
@@ -44,6 +57,16 @@ export class AuthController {
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['email', 'password'],
+      properties: {
+        email: { type: 'string', format: 'email', example: 'user@example.com' },
+        password: { type: 'string', minLength: 8, example: 'password123' },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Login successful, returns JWT' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(

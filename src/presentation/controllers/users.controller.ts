@@ -13,6 +13,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
@@ -47,6 +48,24 @@ export class UsersController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update user profile' })
   @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        firstName: { type: 'string', example: 'John' },
+        lastName: { type: 'string', example: 'Doe' },
+        avatarUrl: {
+          type: 'string',
+          example: 'https://example.com/avatar.jpg',
+        },
+        role: {
+          type: 'string',
+          enum: ['USER', 'ADMIN'],
+          description: 'User role (admin only)',
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
