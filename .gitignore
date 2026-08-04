@@ -3,6 +3,12 @@
 /node_modules
 /build
 
+# Agent tools (not part of the application)
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
+
 # Logs
 logs
 *.log
@@ -37,6 +43,8 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
+.env.docker
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
@@ -54,3 +62,5 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+/generated/prisma

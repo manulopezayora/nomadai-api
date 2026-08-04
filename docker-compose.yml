@@ -1,0 +1,63 @@
+services:
+  # ============================================================
+  # PostgreSQL Database
+  # ============================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: nomadai-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: nomadai
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nomadai-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nomadai"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================================
+  # NestJS Application (Development Mode)
+  # ============================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nomadai-app
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/nomadai?schema=public"
+    networks:
+      - nomadai-network
+    command: >
+      sh -c "pnpm prisma generate &&
+             pnpm prisma migrate dev --name init &&
+             pnpm start:dev"
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+
+networks:
+  nomadai-network:
+    driver: bridge
