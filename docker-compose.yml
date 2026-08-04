@@ -51,7 +51,7 @@ services:
     command: >
       sh -c "pnpm prisma generate &&
              pnpm prisma migrate dev --name init &&
-             pnpm start:dev"
+             pnpm tsx watch src/main.ts"
     stdin_open: true
     tty: true
 
