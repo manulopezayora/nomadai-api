@@ -25,6 +25,7 @@ src/
 │   │   ├── flight-recommendation.entity.ts
 │   │   └── hotel-recommendation.entity.ts
 │   ├── enums/                       # Enums de dominio
+│   │   ├── user-role.enum.ts
 │   │   ├── trip-status.enum.ts
 │   │   ├── activity-category.enum.ts
 │   │   └── travel-style.enum.ts

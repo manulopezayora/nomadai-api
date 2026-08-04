@@ -118,6 +118,7 @@ Almacena la información de cuenta y las preferencias de IA.
 | avatarUrl | String? | URL de avatar (de Google OAuth) |
 | provider | String | "local" o "google" |
 | providerId | String? | ID del proveedor OAuth |
+| role | UserRole (enum) | "USER" o "ADMIN" (default: USER) |
 | createdAt | DateTime | Fecha de creación |
 | updatedAt | DateTime | Fecha de actualización |
 
@@ -323,10 +324,19 @@ pnpm add reflect-metadata rxjs
 ### Desarrollo
 
 ```bash
-pnpm add -D prisma @prisma/client @prisma/adapter-pg pg
+pnpm add -D prisma @types/pg
 pnpm add -D @types/passport-local @types/passport-jwt @types/passport-google-oauth20
-pnpm add -D @types/cookie-parser @types/bcryptjs
+pnpm add -D @types/cookie-parser
 ```
+
+### Producción (Prisma 7 - driver adapter requerido)
+
+```bash
+pnpm add @prisma/client @prisma/adapter-pg pg bcryptjs
+```
+
+> **Nota Prisma 7**: La conexión a PostgreSQL requiere un driver adapter (`@prisma/adapter-pg`).
+> Ver `src/infrastructure/database/prisma/prisma.service.ts` para el patrón correcto.
 
 ---
 
@@ -391,6 +401,7 @@ nomadai-api/
 |------|-------------|-----------------|
 | 1 | **Documentación** — Crear docs/ARCHITECTURE.md | 1 |
 | 2 | **Prisma + DB** — Schema, PrismaService, migración inicial | 3 |
+| 2b | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin | 6 |
 | 3 | **Config** — Variables de entorno validadas con Joi | 2 |
 | 4 | **Users** — CRUD básico | 3 |
 | 5 | **Auth** — Register/Login + Google OAuth + JWT | ~10 |
@@ -454,7 +465,21 @@ docker exec -it nomadai-app pnpm prisma studio
 
 # Crear migración
 docker exec -it nomadai-app pnpm prisma migrate dev --name nombre_migracion
+
+# Seed (crear usuario admin)
+pnpm db:seed
+
+# Reset completo (DB + seed)
+pnpm db:reset
 ```
+
+### Credenciales por defecto (Seed)
+
+| Campo | Valor |
+|-------|-------|
+| Email | `admin@nomadai.com` |
+| Password | `admin123` |
+| Rol | `ADMIN` |
 
 ### Variables de Entorno para Docker
 

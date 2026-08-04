@@ -1,13 +1,152 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// ─── User ───────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  firstName    String?   @map("first_name")
+  lastName     String?   @map("last_name")
+  avatarUrl    String?   @map("avatar_url")
+  provider     String    @default("local")
+  providerId   String?   @map("provider_id")
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  trips Trip[]
+
+  @@map("users")
+}
+
+// ─── Trip ───────────────────────────────────────────────────────────
+
+model Trip {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  title          String
+  destination    String
+  startDate      DateTime @map("start_date")
+  endDate        DateTime @map("end_date")
+  budget         Float?
+  travelerCount  Int      @default(1) @map("traveler_count")
+  preferences    Json
+  status         String   @default("planning")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user                   User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayPlans               DayPlan[]
+  flightRecommendations  FlightRecommendation[]
+  hotelRecommendations   HotelRecommendation[]
+
+  @@index([userId])
+  @@map("trips")
+}
+
+// ─── DayPlan ────────────────────────────────────────────────────────
+
+model DayPlan {
+  id        String   @id @default(cuid())
+  tripId    String   @map("trip_id")
+  dayNumber Int      @map("day_number")
+  date      DateTime
+  title     String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  trip       Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  activities Activity[]
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId])
+  @@map("day_plans")
+}
+
+// ─── Activity ───────────────────────────────────────────────────────
+
+model Activity {
+  id          String   @id @default(cuid())
+  dayPlanId   String   @map("day_plan_id")
+  title       String
+  description String?
+  location    String?
+  latitude    Float?
+  longitude   Float?
+  startTime   String?  @map("start_time")
+  endTime     String?  @map("end_time")
+  cost        Float?
+  bookingUrl  String?  @map("booking_url")
+  category    String?
+  placeId     String?  @map("place_id")
+  order       Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  dayPlan DayPlan @relation(fields: [dayPlanId], references: [id], onDelete: Cascade)
+
+  @@index([dayPlanId])
+  @@map("activities")
+}
+
+// ─── FlightRecommendation ───────────────────────────────────────────
+
+model FlightRecommendation {
+  id            String   @id @default(cuid())
+  tripId        String   @map("trip_id")
+  airline       String
+  departure     String
+  arrival       String
+  departureTime String   @map("departure_time")
+  arrivalTime   String   @map("arrival_time")
+  price         Float?
+  currency      String   @default("EUR")
+  bookingUrl    String?  @map("booking_url")
+  notes         String?
+  isRecommended Boolean  @default(false) @map("is_recommended")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@map("flight_recommendations")
+}
+
+// ─── HotelRecommendation ────────────────────────────────────────────
+
+model HotelRecommendation {
+  id            String   @id @default(cuid())
+  tripId        String   @map("trip_id")
+  name          String
+  location      String
+  latitude      Float?
+  longitude     Float?
+  pricePerNight Float?   @map("price_per_night")
+  currency      String   @default("EUR")
+  rating        Float?
+  amenities     String[]
+  bookingUrl    String?  @map("booking_url")
+  isRecommended Boolean  @default(false) @map("is_recommended")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@map("hotel_recommendations")
 }
