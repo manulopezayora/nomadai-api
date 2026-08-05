@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
-import { User } from '../../../domain/entities/user.entity';
+import { SafeUser, toSafeUser } from '../../dto/safe-user.dto';
 
 @Injectable()
 export class ListUsersUseCase {
@@ -9,9 +9,8 @@ export class ListUsersUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(): Promise<Omit<User, 'passwordHash'>[]> {
+  async execute(): Promise<SafeUser[]> {
     const users = await this.userRepository.findAll();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    return users.map(({ passwordHash: _, ...user }) => user);
+    return users.map(toSafeUser);
   }
 }

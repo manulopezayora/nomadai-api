@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { RegisterDto } from '../../dto/register.dto';
-import { User } from '../../../domain/entities/user.entity';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import { ConflictException } from '../../../domain/exceptions/conflict.exception';
+import { SafeUser, toSafeUser } from '../../dto/safe-user.dto';
 
 @Injectable()
 export class RegisterUseCase {
@@ -13,7 +13,7 @@ export class RegisterUseCase {
     private readonly userRepository: UserRepositoryPort,
   ) {}
 
-  async execute(dto: RegisterDto): Promise<User> {
+  async execute(dto: RegisterDto): Promise<SafeUser> {
     if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
       throw new ValidationException('Invalid email format');
     }
@@ -30,11 +30,13 @@ export class RegisterUseCase {
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    return this.userRepository.create({
+    const user = await this.userRepository.create({
       email: dto.email,
       passwordHash,
       firstName: dto.firstName,
       lastName: dto.lastName,
     });
+
+    return toSafeUser(user);
   }
 }

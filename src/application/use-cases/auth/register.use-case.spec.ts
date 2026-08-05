@@ -108,7 +108,7 @@ describe('RegisterUseCase', () => {
       expect(createCall.passwordHash).toMatch(/^\$2[aby]?\$/);
     });
 
-    it('should return the created user', async () => {
+    it('should return the created user without passwordHash', async () => {
       const user = createMockUser({ email: 'new@test.com' });
       mockUserRepo.create.mockResolvedValue(user);
 
@@ -117,7 +117,20 @@ describe('RegisterUseCase', () => {
         password: 'password123',
       });
 
-      expect(result).toEqual(user);
+      expect(result).toEqual({
+        id: 'user-id-123',
+        email: 'new@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        avatarUrl: null,
+        provider: 'local',
+        providerId: null,
+        role: 'USER',
+        isActive: true,
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      });
+      expect(result).not.toHaveProperty('passwordHash');
     });
   });
 });

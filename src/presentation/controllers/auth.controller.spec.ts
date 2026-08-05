@@ -1,19 +1,19 @@
 import { AuthController } from './auth.controller';
 import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
-import { User } from '../../domain/entities/user.entity';
 import { UserRole } from '../../domain/enums/user-role.enum';
+import { SafeUser } from '../../application/dto/safe-user.dto';
 
-const mockUser = (overrides?: Partial<User>): User => ({
+const mockSafeUser = (overrides?: Partial<SafeUser>): SafeUser => ({
   id: 'user-id-123',
   email: 'test@example.com',
-  passwordHash: '$2b$10$hashedpassword',
   firstName: 'Test',
   lastName: 'User',
   avatarUrl: null,
   provider: 'local',
   providerId: null,
   role: UserRole.USER,
+  isActive: true,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   ...overrides,
@@ -36,7 +36,7 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should create user and return without passwordHash', async () => {
-      const user = mockUser();
+      const user = mockSafeUser();
       mockRegisterUseCase.execute.mockResolvedValue(user);
 
       const result = await controller.register({
@@ -49,7 +49,7 @@ describe('AuthController', () => {
     });
 
     it('should call registerUseCase with dto', async () => {
-      const user = mockUser();
+      const user = mockSafeUser();
       mockRegisterUseCase.execute.mockResolvedValue(user);
 
       await controller.register({

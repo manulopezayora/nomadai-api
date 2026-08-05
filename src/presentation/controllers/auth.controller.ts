@@ -42,10 +42,7 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Invalid email or password' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
   async register(@Body() dto: RegisterDto) {
-    const user = await this.registerUseCase.execute(dto);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return this.registerUseCase.execute(dto);
   }
 
   @Post('login')

@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { UpdateUserDto } from '../../dto/update-user.dto';
-import { User } from '../../../domain/entities/user.entity';
 import { UserRole } from '../../../domain/enums/user-role.enum';
 import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
 import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { SafeUser, toSafeUser } from '../../dto/safe-user.dto';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -18,7 +18,7 @@ export class UpdateUserUseCase {
     id: string,
     dto: UpdateUserDto,
     currentUser: { userId: string; role: UserRole },
-  ): Promise<Omit<User, 'passwordHash'>> {
+  ): Promise<SafeUser> {
     const targetUser = await this.userRepository.findById(id);
 
     if (!targetUser) {
@@ -63,8 +63,6 @@ export class UpdateUserUseCase {
     }
 
     const updated = await this.userRepository.update(id, dto);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { passwordHash: _, ...userWithoutPassword } = updated;
-    return userWithoutPassword;
+    return toSafeUser(updated);
   }
 }

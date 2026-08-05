@@ -592,6 +592,7 @@ import { UserPayload } from '../../shared/types/user-payload';
 - Validar TODOS los inputs con DTOs y class-validator
 - Rate limiting en endpoints de auth
 - Variables sensibles SOLO en `.env` (nunca hardcodeadas)
+- **Siempre** usar `SafeUser` (Omit<User, 'passwordHash'>) como tipo de retorno en use cases que retornan usuarios. Nunca retornar la entidad `User` completa con `passwordHash`. Usar la función `toSafeUser()` para stripear el campo.
 
 ---
 
