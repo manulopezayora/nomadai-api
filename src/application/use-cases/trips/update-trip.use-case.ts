@@ -61,7 +61,11 @@ export class UpdateTripUseCase {
       throw new TripNotFoundException(tripId);
     }
 
-    if (dto.status !== undefined && dto.status !== existing.status) {
+    if (
+      !isAdmin &&
+      dto.status !== undefined &&
+      dto.status !== existing.status
+    ) {
       const allowed = VALID_TRANSITIONS[existing.status] ?? [];
 
       if (!allowed.includes(dto.status)) {

@@ -2,6 +2,7 @@ import { TripsController } from './trips.controller';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
+import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
 import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip.use-case';
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { createMockTrip } from '../../../test/mocks/trip.factory';
@@ -12,6 +13,7 @@ describe('TripsController', () => {
   let mockCreateTrip: jest.Mocked<CreateTripUseCase>;
   let mockGetTrip: jest.Mocked<GetTripUseCase>;
   let mockListTrips: jest.Mocked<ListTripsUseCase>;
+  let mockListAllTrips: jest.Mocked<ListAllTripsUseCase>;
   let mockUpdateTrip: jest.Mocked<UpdateTripUseCase>;
   let mockDeleteTrip: jest.Mocked<DeleteTripUseCase>;
 
@@ -25,6 +27,7 @@ describe('TripsController', () => {
     mockCreateTrip = { execute: jest.fn() } as any;
     mockGetTrip = { execute: jest.fn() } as any;
     mockListTrips = { execute: jest.fn() } as any;
+    mockListAllTrips = { execute: jest.fn() } as any;
     mockUpdateTrip = { execute: jest.fn() } as any;
     mockDeleteTrip = { execute: jest.fn() } as any;
 
@@ -32,6 +35,7 @@ describe('TripsController', () => {
       mockCreateTrip,
       mockGetTrip,
       mockListTrips,
+      mockListAllTrips,
       mockUpdateTrip,
       mockDeleteTrip,
     );
@@ -76,10 +80,32 @@ describe('TripsController', () => {
       };
       mockListTrips.execute.mockResolvedValue(paginatedResponse);
 
-      const result = await controller.findAll(mockUser, { page: 1, limit: 20 });
+      const result = await controller.findAll(mockUser, {
+        page: 1,
+        limit: 20,
+      });
 
       expect(result).toEqual(paginatedResponse);
       expect(mockListTrips.execute).toHaveBeenCalledWith('user-123', 1, 20);
+    });
+  });
+
+  describe('findAllAdmin', () => {
+    it('should return paginated trips for admin', async () => {
+      const trips = [
+        createMockTrip({ id: 'trip-1' }),
+        createMockTrip({ id: 'trip-2' }),
+      ];
+      const paginatedResponse = {
+        data: trips,
+        meta: { total: 2, page: 1, limit: 20, totalPages: 1 },
+      };
+      mockListAllTrips.execute.mockResolvedValue(paginatedResponse);
+
+      const result = await controller.findAllAdmin({ page: 1, limit: 20 });
+
+      expect(result).toEqual(paginatedResponse);
+      expect(mockListAllTrips.execute).toHaveBeenCalledWith(1, 20);
     });
   });
 

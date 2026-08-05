@@ -22,13 +22,17 @@ import {
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
+import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
 import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip.use-case';
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
 import { PaginationDto } from '../../application/dto/pagination.dto';
 import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
+import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
+import { UserRole } from '../../domain/enums/user-role.enum';
 import type { UserPayload } from '../../shared/types/user-payload';
 
 @ApiTags('Trips')
@@ -43,6 +47,8 @@ export class TripsController {
     private readonly getTripUseCase: GetTripUseCase,
     @Inject(ListTripsUseCase)
     private readonly listTripsUseCase: ListTripsUseCase,
+    @Inject(ListAllTripsUseCase)
+    private readonly listAllTripsUseCase: ListAllTripsUseCase,
     @Inject(UpdateTripUseCase)
     private readonly updateTripUseCase: UpdateTripUseCase,
     @Inject(DeleteTripUseCase)
@@ -107,6 +113,29 @@ export class TripsController {
       pagination.page,
       pagination.limit,
     );
+  }
+
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'List all trips (admin only)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 20,
+    description: 'Items per page',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated list of all trips' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Admin role required' })
+  async findAllAdmin(@Query() pagination: PaginationDto) {
+    return this.listAllTripsUseCase.execute(pagination.page, pagination.limit);
   }
 
   @Get(':id')

@@ -176,6 +176,34 @@ describe('UpdateTripUseCase', () => {
         useCase.execute('trip-1', { status: 'active' }, user),
       ).rejects.toThrow(ValidationException);
     });
+
+    it('should allow admin to change any status transition', async () => {
+      const trip = createMockTrip({ userId: 'user-1', status: 'completed' });
+      mockTripRepo.findById.mockResolvedValue(trip);
+      mockTripRepo.update.mockResolvedValue({ ...trip, status: 'planning' });
+
+      const result = await useCase.execute(
+        'trip-1',
+        { status: 'planning' },
+        admin,
+      );
+
+      expect(result.status).toBe('planning');
+    });
+
+    it('should allow admin to change active → planning', async () => {
+      const trip = createMockTrip({ userId: 'user-1', status: 'active' });
+      mockTripRepo.findById.mockResolvedValue(trip);
+      mockTripRepo.update.mockResolvedValue({ ...trip, status: 'planning' });
+
+      const result = await useCase.execute(
+        'trip-1',
+        { status: 'planning' },
+        admin,
+      );
+
+      expect(result.status).toBe('planning');
+    });
   });
 
   describe('field restrictions by status', () => {

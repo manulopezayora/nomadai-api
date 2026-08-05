@@ -17,6 +17,7 @@ o tomar cualquier acción que modifique el código. No asumir nunca qué quiere 
 - Si hay ambigüedad, preguntar para clarificar antes de actuar
 - Nunca crear archivos no solicitados
 - Nunca implementar funcionalidad no explícitamente pedida
+- **NUNCA hacer commits.** Solo el usuario hace commits. El agente solo escribe código, corre tests y lint. El usuario revisa cada archivo antes de commitear.
 
 ---
 

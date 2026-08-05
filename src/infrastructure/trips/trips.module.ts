@@ -5,6 +5,7 @@ import { TripRepositoryPort } from '../../domain/ports/repositories/trip.reposit
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
+import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
 import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip.use-case';
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { TripsController } from '../../presentation/controllers/trips.controller';
@@ -17,6 +18,7 @@ import { TripsController } from '../../presentation/controllers/trips.controller
     CreateTripUseCase,
     GetTripUseCase,
     ListTripsUseCase,
+    ListAllTripsUseCase,
     UpdateTripUseCase,
     DeleteTripUseCase,
   ],
