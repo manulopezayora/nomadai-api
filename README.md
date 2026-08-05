@@ -32,6 +32,7 @@ pnpm install
 pnpm docker:up
 
 # The API will be available at http://localhost:3000
+# Swagger UI at http://localhost:3000/api
 ```
 
 ### Database
@@ -63,19 +64,37 @@ src/
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `pnpm build` | Build for production |
-| `pnpm start:dev` | Start in watch mode |
-| `pnpm lint` | Run ESLint |
-| `pnpm test` | Run unit tests |
-| `pnpm docker:up` | Start with Docker |
-| `pnpm docker:reset` | Reset Docker (volumes + rebuild) |
+| Script              | Description                             |
+| ------------------- | --------------------------------------- |
+| `pnpm build`        | Build for production                    |
+| `pnpm start:dev`    | Start in watch mode                     |
+| `pnpm lint`         | Run ESLint                              |
+| `pnpm test`         | Run unit tests                          |
+| `pnpm test:cov`     | Run tests with coverage                 |
+| `pnpm test:ci`      | Run tests for CI (coverage + forceExit) |
+| `pnpm test:e2e`     | Run E2E tests                           |
+| `pnpm db:seed`      | Seed DB with admin user                 |
+| `pnpm docker:up`    | Start with Docker                       |
+| `pnpm docker:reset` | Reset Docker (volumes + rebuild)        |
+
+## API
+
+Swagger UI available at `http://localhost:3000/api` when the server is running.
 
 ## Architecture
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 See [AGENTS.md](AGENTS.md) for AI agent guidelines and coding conventions.
+
+## Git Conventions
+
+This project uses [conventional commits](https://www.conventionalcommits.org/) enforced by commitlint + husky.
+
+```
+feat(trips): add trip creation endpoint
+fix(auth): handle expired JWT
+docs(arch): update directory structure
+```
 
 ## License
 
