@@ -65,17 +65,21 @@ describe('TripsController', () => {
   });
 
   describe('findAll', () => {
-    it('should return all trips for user', async () => {
+    it('should return paginated trips for user', async () => {
       const trips = [
         createMockTrip({ id: 'trip-1' }),
         createMockTrip({ id: 'trip-2' }),
       ];
-      mockListTrips.execute.mockResolvedValue(trips);
+      const paginatedResponse = {
+        data: trips,
+        meta: { total: 2, page: 1, limit: 20, totalPages: 1 },
+      };
+      mockListTrips.execute.mockResolvedValue(paginatedResponse);
 
-      const result = await controller.findAll(mockUser);
+      const result = await controller.findAll(mockUser, { page: 1, limit: 20 });
 
-      expect(result).toEqual(trips);
-      expect(mockListTrips.execute).toHaveBeenCalledWith('user-123');
+      expect(result).toEqual(paginatedResponse);
+      expect(mockListTrips.execute).toHaveBeenCalledWith('user-123', 1, 20);
     });
   });
 

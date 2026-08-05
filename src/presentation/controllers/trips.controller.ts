@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -16,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
@@ -24,6 +26,7 @@ import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
+import { PaginationDto } from '../../application/dto/pagination.dto';
 import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
 import type { UserPayload } from '../../shared/types/user-payload';
@@ -81,10 +84,29 @@ export class TripsController {
 
   @Get()
   @ApiOperation({ summary: 'List all trips for current user' })
-  @ApiResponse({ status: 200, description: 'List of trips' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 20,
+    description: 'Items per page',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated list of trips' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@CurrentUser() user: UserPayload) {
-    return this.listTripsUseCase.execute(user.userId);
+  async findAll(
+    @CurrentUser() user: UserPayload,
+    @Query() pagination: PaginationDto,
+  ) {
+    return this.listTripsUseCase.execute(
+      user.userId,
+      pagination.page,
+      pagination.limit,
+    );
   }
 
   @Get(':id')

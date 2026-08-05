@@ -21,12 +21,35 @@ export class PrismaTripRepository extends TripRepositoryPort {
     return trip ? TripMapper.toDomain(trip) : null;
   }
 
-  async findByUserId(userId: string): Promise<Trip[]> {
+  async findByUserId(
+    userId: string,
+    offset: number,
+    limit: number,
+  ): Promise<Trip[]> {
     const trips = await this.prisma.instance.trip.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
     });
     return trips.map((t) => TripMapper.toDomain(t as any));
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.prisma.instance.trip.count({ where: { userId } });
+  }
+
+  async findAll(offset: number, limit: number): Promise<Trip[]> {
+    const trips = await this.prisma.instance.trip.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
+    return trips.map((t) => TripMapper.toDomain(t as any));
+  }
+
+  async count(): Promise<number> {
+    return this.prisma.instance.trip.count();
   }
 
   async create(data: CreateTripData): Promise<Trip> {

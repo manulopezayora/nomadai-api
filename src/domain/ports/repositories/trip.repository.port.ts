@@ -30,7 +30,14 @@ export interface UpdateTripData {
 
 export abstract class TripRepositoryPort {
   abstract findById(id: string): Promise<Trip | null>;
-  abstract findByUserId(userId: string): Promise<Trip[]>;
+  abstract findByUserId(
+    userId: string,
+    offset: number,
+    limit: number,
+  ): Promise<Trip[]>;
+  abstract countByUserId(userId: string): Promise<number>;
+  abstract findAll(offset: number, limit: number): Promise<Trip[]>;
+  abstract count(): Promise<number>;
   abstract create(data: CreateTripData): Promise<Trip>;
   abstract update(id: string, data: UpdateTripData): Promise<Trip>;
   abstract delete(id: string): Promise<void>;

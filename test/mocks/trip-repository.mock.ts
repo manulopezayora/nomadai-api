@@ -4,6 +4,9 @@ export const createMockTripRepository = () =>
   ({
     findById: jest.fn(),
     findByUserId: jest.fn(),
+    countByUserId: jest.fn(),
+    findAll: jest.fn(),
+    count: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
