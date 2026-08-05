@@ -63,7 +63,12 @@ export class UsersController {
         role: {
           type: 'string',
           enum: ['USER', 'ADMIN'],
-          description: 'User role (admin only)',
+          description: 'User role (admin only, not on self)',
+        },
+        isActive: {
+          type: 'boolean',
+          example: true,
+          description: 'Active status (admin only, not on self)',
         },
       },
     },

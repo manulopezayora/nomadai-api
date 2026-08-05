@@ -22,4 +22,5 @@ export const createMockUserRepository =
       .mockImplementation((id, data) =>
         Promise.resolve(createMockUser({ id, ...data })),
       ),
+    countActiveAdmins: jest.fn().mockResolvedValue(2),
   });

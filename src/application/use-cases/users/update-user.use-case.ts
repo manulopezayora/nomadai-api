@@ -5,6 +5,7 @@ import { User } from '../../../domain/entities/user.entity';
 import { UserRole } from '../../../domain/enums/user-role.enum';
 import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
 import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -31,9 +32,34 @@ export class UpdateUserUseCase {
       throw new ForbiddenException('You can only update your own profile');
     }
 
-    // Only admins can change roles
-    if (dto.role && !isAdmin) {
-      throw new ForbiddenException('Only admins can change user roles');
+    const wantsToChangeRole = dto.role !== undefined;
+    const wantsToChangeActive = dto.isActive !== undefined;
+
+    if (wantsToChangeRole || wantsToChangeActive) {
+      if (!isAdmin) {
+        throw new ForbiddenException('Only admins can change role or isActive');
+      }
+
+      if (isOwnProfile) {
+        throw new ForbiddenException(
+          'Admins cannot change their own role or isActive',
+        );
+      }
+
+      if (wantsToChangeActive && dto.isActive === false) {
+        const isTargetAdmin = targetUser.role === UserRole.ADMIN;
+
+        if (isTargetAdmin) {
+          const activeAdminCount =
+            await this.userRepository.countActiveAdmins();
+
+          if (activeAdminCount <= 1) {
+            throw new ValidationException(
+              'Cannot deactivate the last active admin',
+            );
+          }
+        }
+      }
     }
 
     const updated = await this.userRepository.update(id, dto);

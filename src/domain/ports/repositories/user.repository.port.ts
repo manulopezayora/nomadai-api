@@ -15,6 +15,7 @@ export interface UpdateUserData {
   lastName?: string;
   avatarUrl?: string;
   role?: UserRole;
+  isActive?: boolean;
 }
 
 export abstract class UserRepositoryPort {
@@ -23,4 +24,5 @@ export abstract class UserRepositoryPort {
   abstract findAll(): Promise<User[]>;
   abstract create(data: CreateUserData): Promise<User>;
   abstract update(id: string, data: UpdateUserData): Promise<User>;
+  abstract countActiveAdmins(): Promise<number>;
 }

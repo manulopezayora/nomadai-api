@@ -1,5 +1,6 @@
 import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
 import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import { UpdateUserUseCase } from './update-user.use-case';
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
 import {
@@ -106,13 +107,7 @@ describe('UpdateUserUseCase', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should allow admin to change role', async () => {
-      const adminUser = createMockAdmin();
-      mockUserRepo.update.mockResolvedValue({
-        ...targetUser,
-        role: UserRole.ADMIN,
-      });
-
+    it('should allow admin to change role on other user', async () => {
       const result = await useCase.execute(
         'target-user',
         { role: UserRole.ADMIN },
@@ -123,6 +118,137 @@ describe('UpdateUserUseCase', () => {
       );
 
       expect(result).toBeDefined();
+    });
+
+    it('should throw ForbiddenException when admin tries to change own role', async () => {
+      const adminUser = createMockAdmin({ id: 'admin-self' });
+      mockUserRepo.findById.mockResolvedValue(adminUser);
+
+      await expect(
+        useCase.execute(
+          'admin-self',
+          { role: UserRole.USER },
+          {
+            userId: 'admin-self',
+            role: UserRole.ADMIN,
+          },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('isActive changes', () => {
+    it('should throw ForbiddenException when non-admin tries to change isActive', async () => {
+      const targetUser = createMockUser({ id: 'target-user' });
+      mockUserRepo.findById.mockResolvedValue(targetUser);
+
+      await expect(
+        useCase.execute(
+          'target-user',
+          { isActive: false },
+          {
+            userId: 'target-user',
+            role: UserRole.USER,
+          },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should allow admin to deactivate other user', async () => {
+      const targetUser = createMockUser({ id: 'target-user' });
+      mockUserRepo.findById.mockResolvedValue(targetUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...targetUser,
+        isActive: false,
+      });
+
+      const result = await useCase.execute(
+        'target-user',
+        { isActive: false },
+        {
+          userId: 'admin-id',
+          role: UserRole.ADMIN,
+        },
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it('should throw ForbiddenException when admin tries to deactivate self', async () => {
+      const adminUser = createMockAdmin({ id: 'admin-self' });
+      mockUserRepo.findById.mockResolvedValue(adminUser);
+
+      await expect(
+        useCase.execute(
+          'admin-self',
+          { isActive: false },
+          {
+            userId: 'admin-self',
+            role: UserRole.ADMIN,
+          },
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('last admin protection', () => {
+    it('should throw ValidationException when deactivating the last active admin', async () => {
+      const adminUser = createMockAdmin({ id: 'last-admin' });
+      mockUserRepo.findById.mockResolvedValue(adminUser);
+      mockUserRepo.countActiveAdmins.mockResolvedValue(1);
+
+      await expect(
+        useCase.execute(
+          'last-admin',
+          { isActive: false },
+          {
+            userId: 'other-admin',
+            role: UserRole.ADMIN,
+          },
+        ),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should allow deactivating admin when more than 1 admin exists', async () => {
+      const adminUser = createMockAdmin({ id: 'target-admin' });
+      mockUserRepo.findById.mockResolvedValue(adminUser);
+      mockUserRepo.countActiveAdmins.mockResolvedValue(2);
+      mockUserRepo.update.mockResolvedValue({
+        ...adminUser,
+        isActive: false,
+      });
+
+      const result = await useCase.execute(
+        'target-admin',
+        { isActive: false },
+        {
+          userId: 'other-admin',
+          role: UserRole.ADMIN,
+        },
+      );
+
+      expect(result).toBeDefined();
+    });
+
+    it('should not check admin count when deactivating non-admin user', async () => {
+      const regularUser = createMockUser({ id: 'regular-user' });
+      mockUserRepo.findById.mockResolvedValue(regularUser);
+      mockUserRepo.update.mockResolvedValue({
+        ...regularUser,
+        isActive: false,
+      });
+
+      const result = await useCase.execute(
+        'regular-user',
+        { isActive: false },
+        {
+          userId: 'admin-id',
+          role: UserRole.ADMIN,
+        },
+      );
+
+      expect(result).toBeDefined();
+      expect(mockUserRepo.countActiveAdmins).not.toHaveBeenCalled();
     });
   });
 

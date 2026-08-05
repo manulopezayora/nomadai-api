@@ -286,6 +286,36 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ---
 
+## Reglas de Negocio — User Management
+
+### Permisos de edición
+
+| Actor         | Campos editables                                       | Campos bloqueados                  |
+| ------------- | ------------------------------------------------------ | ---------------------------------- |
+| **Visitante** | —                                                      | — (solo puede registrarse)         |
+| **USER**      | firstName, lastName, avatarUrl (solo su propio perfil) | role, isActive                     |
+| **ADMIN**     | Todos los campos en OTROS usuarios                     | role, isActive en SU PROPIO perfil |
+
+### Reglas de seguridad
+
+| #   | Regla                                          | Protege contra                           |
+| --- | ---------------------------------------------- | ---------------------------------------- |
+| 1   | Admin no puede cambiar su propio `role`        | Auto-demotion accidental → lockout       |
+| 2   | Admin no puede cambiar su propio `isActive`    | Auto-desactivación accidental → lockout  |
+| 3   | No se puede desactivar al último admin activo  | Lockout del sistema (0 admins)           |
+| 4   | Solo admins pueden cambiar `role` e `isActive` | Usuarios normales promoviendo privileges |
+
+### Escenarios cubiertos
+
+- **Admin promociona a otro usuario**: ✅ Permitido
+- **Admin desactiva a otro admin** (hay más admins activos): ✅ Permitido
+- **Admin se desactiva a sí mismo**: ❌ Bloqueado (regla 2)
+- **Admin se demotiona a sí mismo**: ❌ Bloqueado (regla 1)
+- **Último admin intenta desactivar a otro admin**: ❌ Bloqueado (regla 3)
+- **Usuario normal intenta cambiar role/isActive**: ❌ Bloqueado (regla 4)
+
+---
+
 ## Flujo Principal del Usuario
 
 ```

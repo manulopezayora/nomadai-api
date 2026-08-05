@@ -72,6 +72,12 @@ export class PrismaUserRepository extends UserRepositoryPort {
     return this.toDomain(user);
   }
 
+  async countActiveAdmins(): Promise<number> {
+    return this.prisma.instance.user.count({
+      where: { role: 'ADMIN', isActive: true },
+    });
+  }
+
   private toDomain(raw: RawUser): User {
     return {
       id: raw.id,
