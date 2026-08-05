@@ -7,6 +7,19 @@ Consultar `docs/ARCHITECTURE.md` para detalles completos del stack, modelo de da
 
 ---
 
+## Regla Fundamental: Preguntar ANTES de Actuar
+
+**SIEMPRE** preguntar al usuario antes de implementar cambios, crear archivos,
+o tomar cualquier acción que modifique el código. No asumir nunca qué quiere el usuario.
+
+- Si el usuario dice "arregla los tests", SOLO arreglar tests
+- Si el usuario pregunta "qué sigue?", primero proponer el plan y esperar confirmación
+- Si hay ambigüedad, preguntar para clarificar antes de actuar
+- Nunca crear archivos no solicitados
+- Nunca implementar funcionalidad no explícitamente pedida
+
+---
+
 ## Arquitectura Hexagonal (Puertos y Adaptadores)
 
 El proyecto sigue **arquitectura hexagonal** (Ports & Adapters). La lógica de negocio

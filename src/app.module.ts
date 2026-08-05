@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './infrastructure/auth/auth.module';
 import { UsersModule } from './infrastructure/users/users.module';
+import { TripsModule } from './infrastructure/trips/trips.module';
 import { envValidationSchema } from './shared/config/env.validation';
 
 @Module({
@@ -16,6 +17,7 @@ import { envValidationSchema } from './shared/config/env.validation';
     PrismaModule,
     AuthModule,
     UsersModule,
+    TripsModule,
   ],
   controllers: [],
   providers: [],
