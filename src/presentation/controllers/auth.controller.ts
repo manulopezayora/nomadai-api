@@ -10,8 +10,8 @@ import { RegisterUseCase } from '../../application/use-cases/auth/register.use-c
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
 import { RegisterDto } from '../../application/dto/register.dto';
 import { LoginDto } from '../../application/dto/login.dto';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import type { UserPayload } from '../../shared/types/user-payload';
 
 @ApiTags('Auth')

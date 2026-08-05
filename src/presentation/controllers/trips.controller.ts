@@ -28,10 +28,10 @@ import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
 import { PaginationDto } from '../../application/dto/pagination.dto';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
-import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { UserRole } from '../../domain/enums/user-role.enum';
 import type { UserPayload } from '../../shared/types/user-payload';
 

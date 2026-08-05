@@ -112,6 +112,10 @@ src/
 ├── shared/                          # UTILIDADES COMPARTIDAS
 │   ├── config/
 │   │   └── env.validation.ts
+│   ├── decorators/                  # Decoradores compartidos
+│   │   └── current-user.decorator.ts
+│   ├── guards/                      # Guards compartidos
+│   │   └── jwt-auth.guard.ts
 │   └── types/                       # Tipos compartidos
 │       └── user-payload.ts
 │
@@ -124,7 +128,8 @@ src/
 domain/          → NO depende de NADA (ni de Prisma, ni de NestJS, ni de nada externo)
 application/     → Depende SOLO de domain/
 infrastructure/  → Depende de domain/ y application/
-presentation/    → Depende de application/ (NUNCA directamente de infrastructure/)
+presentation/    → Depende de application/ y shared/ (NUNCA directamente de infrastructure/)
+shared/          → Depende solo de domain/ (tipos, decorators, guards)
 ```
 
 Las flechas de dependencia van **siempre hacia adentro**. Nunca hacia afuera.
@@ -620,6 +625,12 @@ import { UserPayload } from '../../shared/types/user-payload';
                     │     INFRASTRUCTURE          │
                     │  (Prisma, Gemini, Auth,      │
                     │   Repositories, Mappers)    │
+                    └─────────────────────────────┘
+
+                    ┌─────────────────────────────┐
+                    │         SHARED              │
+                    │  (Guards, Decorators,        │
+                    │   Config, Types)             │
                     └─────────────────────────────┘
 ```
 

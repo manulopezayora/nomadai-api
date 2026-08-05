@@ -15,10 +15,10 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../infrastructure/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
-import { CurrentUser } from '../../infrastructure/auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { UserRole } from '../../domain/enums/user-role.enum';
 import { ListUsersUseCase } from '../../application/use-cases/users/list-users.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
