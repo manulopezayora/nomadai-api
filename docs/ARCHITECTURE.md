@@ -525,13 +525,9 @@ nomadai-api/
 │   │   │       └── ...
 │   │   ├── auth/
 │   │   │   ├── auth.module.ts
-│   │   │   ├── strategies/
-│   │   │   │   ├── local.strategy.ts
-│   │   │   │   └── jwt.strategy.ts
-│   │   │   ├── guards/
-│   │   │   │   └── jwt-auth.guard.ts
-│   │   │   └── decorators/
-│   │   │       └── current-user.decorator.ts
+│   │   │   └── strategies/
+│   │   │       ├── local.strategy.ts
+│   │   │       └── jwt.strategy.ts
 │   │   ├── users/
 │   │   │   └── users.module.ts
 │   │   ├── trips/
@@ -557,8 +553,13 @@ nomadai-api/
 │   └── shared/                  # UTILIDADES COMPARTIDAS
 │       ├── config/
 │       │   └── env.validation.ts
-│       └── types/
-│           └── user-payload.ts
+│       ├── decorators/          # Decoradores compartidos
+│       │   └── current-user.decorator.ts
+│       ├── guards/              # Guards compartidos
+│       │   └── jwt-auth.guard.ts
+│       └── types/               # Tipos compartidos
+│           ├── user-payload.ts
+│           └── paginated-response.ts
 │
 ├── prisma/
 │   ├── schema.prisma            # 6 modelos + UserRole + TripStatus enums
@@ -597,7 +598,8 @@ nomadai-api/
 domain/          → NO depende de NADA (ni de Prisma, ni de NestJS, ni de nada externo)
 application/     → Depende SOLO de domain/
 infrastructure/  → Depende de domain/ y application/
-presentation/    → Depende de application/ (NUNCA directamente de infrastructure/)
+presentation/    → Depende de application/ y shared/ (NUNCA directamente de infrastructure/)
+shared/          → Depende solo de domain/ (tipos, decorators, guards)
 ```
 
 Las flechas de dependencia van **siempre hacia adentro**. Nunca hacia afuera.
@@ -631,21 +633,21 @@ Database
 | 4    | **Users** — CRUD básico                                                         | ✅ Hecho     |
 | 5    | **Auth** — Register/Login + JWT                                                 | ✅ Hecho     |
 | 5b   | **Swagger** — Documentación API con @nestjs/swagger                             | ✅ Hecho     |
-| 6    | **Trips** — CRUD de viajes                                                      | ✅ Hecho     |
+| 6    | **Trips** — CRUD de viajes + admin management                                   | ✅ Hecho     |
 | 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ⬜ Pendiente |
 | 8    | **Gemini Module** — Integración con Google Gemini                               | ⬜ Pendiente |
 | 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ⬜ Pendiente |
-| 10   | **Hardening** — Rate limiting ✅, filtros de excepción, global exception filter | ⬜ Pendiente |
+| 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho     |
 
-### Estado actual (Paso 6 + admin trips completado)
+### Estado actual (Hardening completado)
 
 **Módulos funcionando:**
 
 - `POST /auth/register` — Registro con validación manual (email, password)
 - `POST /auth/login` — Login con JWT (accessToken en body)
 - `GET /auth/profile` — Perfil del usuario autenticado
-- `GET /users` — Listar usuarios (solo ADMIN)
-- `PATCH /users/:id` — Actualizar perfil (propio o admin)
+- `GET /users` — Listar usuarios (solo ADMIN, paginado)
+- `PATCH /users/:id` — Actualizar perfil (propio o admin, con reglas de negocio)
 - `POST /trips` — Crear viaje
 - `GET /trips` — Listar viajes del usuario (paginado)
 - `GET /trips/admin/all` — Listar todos los viajes (solo ADMIN, paginado)
@@ -653,12 +655,17 @@ Database
 - `PATCH /trips/:id` — Actualizar viaje (solo propietario o admin, admin bypass total)
 - `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario o admin)
 
-**Credenciales de prueba:**
+**Hardening completado:**
 
-| Email               | Password      | Rol   |
-| ------------------- | ------------- | ----- |
-| `admin@nomadai.com` | `admin123`    | ADMIN |
-| `test@test.com`     | `testpass123` | USER  |
+- ✅ Rate limiting global (ThrottlerGuard: 100 requests/60s)
+- ✅ JWT secret sin fallback (requerido en .env, validado por Joi)
+- ✅ JwtModule.registerAsync con ConfigService
+- ✅ JwtAuthGuard y CurrentUser en shared/ (arquitectura hexagonal correcta)
+- ✅ UserMapper y TripMapper (eliminados `as any` en repositorios)
+- ✅ Validación manual en use cases (page, limit, email, password, etc.)
+- ✅ Enums de dominio en todas las capas (TripStatus, TravelStyle, UserRole)
+- ✅ Paginación estándar en todos los endpoints de listado
+- ✅ SafeUser como tipo de retorno (sin passwordHash)
 
 **Swagger UI:** `http://localhost:3000/api`
 
