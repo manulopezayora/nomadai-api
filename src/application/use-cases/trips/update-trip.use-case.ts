@@ -146,6 +146,13 @@ export class UpdateTripUseCase {
       updateData.status = dto.status;
     }
 
+    const finalStartDate = (updateData.startDate as Date) ?? existing.startDate;
+    const finalEndDate = (updateData.endDate as Date) ?? existing.endDate;
+
+    if (finalEndDate <= finalStartDate) {
+      throw new ValidationException('End date must be after start date');
+    }
+
     return this.tripRepository.update(tripId, updateData);
   }
 }

@@ -187,7 +187,11 @@ describe('UpdateTripUseCase', () => {
       await expect(
         useCase.execute(
           'trip-1',
-          { destination: 'Osaka', startDate: '2026-10-01' },
+          {
+            destination: 'Osaka',
+            startDate: '2026-09-01',
+            endDate: '2026-09-10',
+          },
           user,
         ),
       ).resolves.toBeDefined();
@@ -247,6 +251,90 @@ describe('UpdateTripUseCase', () => {
 
       await expect(
         useCase.execute('trip-1', { title: 'Fixed' }, admin),
+      ).resolves.toBeDefined();
+    });
+  });
+
+  describe('date validation on update', () => {
+    it('should reject endDate before startDate', async () => {
+      const trip = createMockTrip({
+        userId: 'user-1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      });
+      mockTripRepo.findById.mockResolvedValue(trip);
+
+      await expect(
+        useCase.execute(
+          'trip-1',
+          { startDate: '2026-09-25', endDate: '2026-09-15' },
+          user,
+        ),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should reject changing only startDate making it after endDate', async () => {
+      const trip = createMockTrip({
+        userId: 'user-1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      });
+      mockTripRepo.findById.mockResolvedValue(trip);
+
+      await expect(
+        useCase.execute('trip-1', { startDate: '2026-09-30' }, user),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should reject changing only endDate making it before startDate', async () => {
+      const trip = createMockTrip({
+        userId: 'user-1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      });
+      mockTripRepo.findById.mockResolvedValue(trip);
+
+      await expect(
+        useCase.execute('trip-1', { endDate: '2026-09-10' }, user),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should allow valid date update', async () => {
+      const trip = createMockTrip({
+        userId: 'user-1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      });
+      mockTripRepo.findById.mockResolvedValue(trip);
+      mockTripRepo.update.mockResolvedValue({
+        ...trip,
+        startDate: new Date('2026-10-01'),
+        endDate: new Date('2026-10-10'),
+      });
+
+      await expect(
+        useCase.execute(
+          'trip-1',
+          { startDate: '2026-10-01', endDate: '2026-10-10' },
+          user,
+        ),
+      ).resolves.toBeDefined();
+    });
+
+    it('should allow changing only startDate if endDate still after', async () => {
+      const trip = createMockTrip({
+        userId: 'user-1',
+        startDate: new Date('2026-09-15'),
+        endDate: new Date('2026-09-25'),
+      });
+      mockTripRepo.findById.mockResolvedValue(trip);
+      mockTripRepo.update.mockResolvedValue({
+        ...trip,
+        startDate: new Date('2026-09-20'),
+      });
+
+      await expect(
+        useCase.execute('trip-1', { startDate: '2026-09-20' }, user),
       ).resolves.toBeDefined();
     });
   });
