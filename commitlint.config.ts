@@ -1,0 +1,42 @@
+export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      [
+        'feat',
+        'fix',
+        'docs',
+        'style',
+        'refactor',
+        'test',
+        'chore',
+        'ci',
+        'perf',
+        'revert',
+      ],
+    ],
+    'scope-enum': [
+      1,
+      'always',
+      [
+        'auth',
+        'users',
+        'trips',
+        'day-plans',
+        'activities',
+        'gemini',
+        'recommendations',
+        'db',
+        'deps',
+        'config',
+        'arch',
+        'testing',
+        'docker',
+      ],
+    ],
+    'subject-max-length': [2, 'always', 100],
+    'body-max-line-length': [1, 'always', 120],
+  },
+};

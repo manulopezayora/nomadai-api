@@ -136,22 +136,27 @@ Database
 ## Clean Code y Principios SOLID
 
 ### S — Single Responsibility
+
 - Cada clase/archivo tiene **una única razón para cambiar**
 - Un controller solo orquesta, un use case solo tiene una lógica
 - Un repository solo accede a datos
 
 ### O — Open/Closed
+
 - Entidades y puertos son **abiertos a extensión, cerrados a modificación**
 - Para añadir un nuevo adaptador de IA, se crea una nueva implementación del puerto
 
 ### L — Liskov Substitution
+
 - Todas las implementaciones de un puerto deben ser intercambiables
 
 ### I — Interface Segregation
+
 - Puertos pequeños y específicos (no interfaces gigantes)
 - `UserRepositoryPort` solo tiene métodos de usuario
 
 ### D — Dependency Inversion
+
 - Los módulos de alto nivel no dependen de bajo nivel
 - Ambos dependen de **abstracciones** (puertos/interfaces)
 
@@ -237,7 +242,7 @@ export interface TripRepositoryPort {
 // application/use-cases/trips/create-trip.use-case.ts
 export class CreateTripUseCase {
   constructor(
-    private readonly tripRepository: TripRepositoryPort,  // Puerto inyectado
+    private readonly tripRepository: TripRepositoryPort, // Puerto inyectado
   ) {}
 
   async execute(dto: CreateTripDto, userId: string): Promise<Trip> {
@@ -381,6 +386,7 @@ Por eso `@ApiBody({ type: RegisterDto })` causa un error de dependencia circular
 ```
 
 **Checklist de documentación por módulo:**
+
 - [ ] `@ApiTags('NombreDelModulo')` en el controller
 - [ ] `@ApiBearerAuth()` en controllers protegidos
 - [ ] `@ApiOperation` en cada endpoint
@@ -416,6 +422,7 @@ constructor(
 ```
 
 Esto aplica a:
+
 - **Controllers**: `@Inject(UseCase)` en cada caso de uso
 - **Use Cases**: `@Inject(Port)` en cada puerto/repositorio
 - **Guards**: `@Inject(Reflector)` si usan Reflector
@@ -499,21 +506,21 @@ Si alguno falla, **corregir antes de continuar**.
 
 ## Naming Conventions
 
-| Tipo | Convención | Ejemplo |
-|------|-----------|---------|
-| Archivos de caso de uso | `*.use-case.ts` | `create-trip.use-case.ts` |
-| Archivos de controller | `*.controller.ts` | `trips.controller.ts` |
-| Archivos de servicio | `*.service.ts` | `gemini.service.ts` |
-| Archivos de repository | `*.repository.ts` | `prisma-trip.repository.ts` |
-| Archivos de DTO | `*.dto.ts` | `create-trip.dto.ts` |
-| Archivos de mapper | `*.mapper.ts` | `trip.mapper.ts` |
-| Archivos de strategy | `*.strategy.ts` | `jwt.strategy.ts` |
-| Archivos de guard | `*.guard.ts` | `jwt-auth.guard.ts` |
-| Archivos de interfaz | `*.port.ts` (puerto) | `trip.repository.port.ts` |
-| Enums | `*.enum.ts` | `trip-status.enum.ts` |
-| Clases | PascalCase | `CreateTripUseCase` |
-| Variables/funciones | camelCase | `createTripUseCase` |
-| Constantes | UPPER_SNAKE_CASE | `MAX_TRIPS_PER_USER` |
+| Tipo                    | Convención           | Ejemplo                     |
+| ----------------------- | -------------------- | --------------------------- |
+| Archivos de caso de uso | `*.use-case.ts`      | `create-trip.use-case.ts`   |
+| Archivos de controller  | `*.controller.ts`    | `trips.controller.ts`       |
+| Archivos de servicio    | `*.service.ts`       | `gemini.service.ts`         |
+| Archivos de repository  | `*.repository.ts`    | `prisma-trip.repository.ts` |
+| Archivos de DTO         | `*.dto.ts`           | `create-trip.dto.ts`        |
+| Archivos de mapper      | `*.mapper.ts`        | `trip.mapper.ts`            |
+| Archivos de strategy    | `*.strategy.ts`      | `jwt.strategy.ts`           |
+| Archivos de guard       | `*.guard.ts`         | `jwt-auth.guard.ts`         |
+| Archivos de interfaz    | `*.port.ts` (puerto) | `trip.repository.port.ts`   |
+| Enums                   | `*.enum.ts`          | `trip-status.enum.ts`       |
+| Clases                  | PascalCase           | `CreateTripUseCase`         |
+| Variables/funciones     | camelCase            | `createTripUseCase`         |
+| Constantes              | UPPER_SNAKE_CASE     | `MAX_TRIPS_PER_USER`        |
 
 ---
 
@@ -578,3 +585,131 @@ import { UserPayload } from '../../shared/types/request-with-user';
 
 **Regla de oro:** Las dependencias siempre apuntan hacia adentro (→ Domain).
 Nunca hacia afuera.
+
+---
+
+## Testing
+
+### Convenciones
+
+- Archivos de test: `*.spec.ts` (junto al archivo que testea)
+- Tests unitarios: mockear dependencias con `jest.Mocked<T>`
+- Tests E2E: en `test/`, usar `@nestjs/testing` + `supertest`
+- Coverage mínimo: 50% global (subir conforme crece el proyecto)
+
+### Estructura de un test unitario
+
+```typescript
+import { SomeUseCase } from './some.use-case';
+import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
+
+describe('SomeUseCase', () => {
+  let useCase: SomeUseCase;
+  let mockRepo: ReturnType<typeof createMockUserRepository>;
+
+  beforeEach(() => {
+    mockRepo = createMockUserRepository();
+    useCase = new SomeUseCase(mockRepo as unknown as UserRepositoryPort);
+  });
+
+  describe('methodName', () => {
+    it('should do something', async () => {
+      // Arrange
+      mockRepo.findById.mockResolvedValue(mockData);
+
+      // Act
+      const result = await useCase.execute(input);
+
+      // Assert
+      expect(result).toEqual(expected);
+    });
+  });
+});
+```
+
+### Mock factories disponibles
+
+| Factory                      | Ubicación                            | Uso                    |
+| ---------------------------- | ------------------------------------ | ---------------------- |
+| `createMockUser()`           | `test/mocks/user.factory.ts`         | Usuario de prueba      |
+| `createMockAdmin()`          | `test/mocks/user.factory.ts`         | Admin de prueba        |
+| `createMockUserRepository()` | `test/mocks/user-repository.mock.ts` | Mock completo del repo |
+| `createMockJwtService()`     | `test/mocks/jwt-service.mock.ts`     | Mock de JwtService     |
+| `createMockReflector()`      | `test/mocks/reflector.mock.ts`       | Mock de Reflector      |
+
+### Comandos de test
+
+```bash
+pnpm test          # Ejecutar todos los tests
+pnpm test:watch    # Modo watch (desarrollo)
+pnpm test:cov      # Con coverage
+pnpm test:ci       # Para CI (coverage + forceExit)
+pnpm test:e2e      # Tests E2E (requiere DB)
+```
+
+---
+
+## Conventional Commits
+
+El proyecto usa **conventional commits** validados por `commitlint`.
+
+### Formato
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types permitidos
+
+| Type       | Uso                            | Ejemplo                                    |
+| ---------- | ------------------------------ | ------------------------------------------ |
+| `feat`     | Nueva funcionalidad            | `feat(trips): add CRUD endpoints`          |
+| `fix`      | Bug fix                        | `fix(auth): handle expired JWT`            |
+| `docs`     | Documentación                  | `docs(arch): update directory structure`   |
+| `style`    | Formato (sin cambio de lógica) | `style: apply prettier`                    |
+| `refactor` | Refactorización                | `refactor(auth): extract validation logic` |
+| `test`     | Tests                          | `test(auth): add register unit tests`      |
+| `chore`    | Config, dependencias           | `chore(deps): add husky`                   |
+| `ci`       | CI/CD                          | `ci: add GitHub Actions workflow`          |
+| `perf`     | Rendimiento                    | `perf(db): add missing index`              |
+| `revert`   | Revertir commit                | `revert: revert "feat(trips)..."`          |
+
+### Scopes permitidos
+
+`auth`, `users`, `trips`, `day-plans`, `activities`, `gemini`, `recommendations`, `db`, `deps`, `config`, `arch`, `testing`, `docker`
+
+### Hooks automáticos
+
+- **pre-commit**: `lint-staged` ejecuta ESLint + Prettier en archivos staged
+- **commit-msg**: `commitlint` valida el formato del mensaje
+
+---
+
+## Git Hooks (Husky)
+
+### Pre-commit
+
+Ejecuta `lint-staged` que aplica:
+
+- `*.ts` → ESLint --fix + Prettier --write
+- `*.{json,md,yml}` → Prettier --write
+
+### Commit-msg
+
+Valida el mensaje con `commitlint`. Ejemplo de commit válido:
+
+```bash
+git commit -m "feat(trips): add trip creation endpoint"
+```
+
+### Commits inválidos (serán rechazados)
+
+```bash
+git commit -m "added new feature"     # ❌ Sin type
+git commit -m "feat: add trips"       # ❌ Sin scope
+git commit -m "feat(invalid): test"   # ❌ Scope no permitido
+```
