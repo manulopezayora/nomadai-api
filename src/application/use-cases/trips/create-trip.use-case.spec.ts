@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import { createMockTripRepository } from '../../../../test/mocks/trip-repository.mock';
 import { createMockTrip } from '../../../../test/mocks/trip.factory';
 import { CreateTripUseCase } from './create-trip.use-case';
@@ -13,7 +13,7 @@ describe('CreateTripUseCase', () => {
   });
 
   describe('validation', () => {
-    it('should throw BadRequestException for empty title', async () => {
+    it('should throw ValidationException for empty title', async () => {
       await expect(
         useCase.execute(
           {
@@ -25,10 +25,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for empty destination', async () => {
+    it('should throw ValidationException for empty destination', async () => {
       await expect(
         useCase.execute(
           {
@@ -40,10 +40,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for missing start date', async () => {
+    it('should throw ValidationException for missing start date', async () => {
       await expect(
         useCase.execute(
           {
@@ -55,10 +55,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for missing end date', async () => {
+    it('should throw ValidationException for missing end date', async () => {
       await expect(
         useCase.execute(
           {
@@ -70,10 +70,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for empty interests', async () => {
+    it('should throw ValidationException for empty interests', async () => {
       await expect(
         useCase.execute(
           {
@@ -85,10 +85,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for invalid start date', async () => {
+    it('should throw ValidationException for invalid start date', async () => {
       await expect(
         useCase.execute(
           {
@@ -100,10 +100,10 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for end date before start date', async () => {
+    it('should throw ValidationException for end date before start date', async () => {
       await expect(
         useCase.execute(
           {
@@ -115,7 +115,7 @@ describe('CreateTripUseCase', () => {
           },
           'user-123',
         ),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
   });
 

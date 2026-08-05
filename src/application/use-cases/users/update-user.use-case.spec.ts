@@ -1,4 +1,5 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
+import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
 import { UpdateUserUseCase } from './update-user.use-case';
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
 import {

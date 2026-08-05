@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { ConflictException } from '../../../domain/exceptions/conflict.exception';
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
 import { createMockUser } from '../../../../test/mocks/user.factory';
 import { RegisterUseCase } from './register.use-case';
@@ -13,28 +14,28 @@ describe('RegisterUseCase', () => {
   });
 
   describe('validation', () => {
-    it('should throw BadRequestException for invalid email format', async () => {
+    it('should throw ValidationException for invalid email format', async () => {
       await expect(
         useCase.execute({ email: 'not-an-email', password: 'password123' }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for empty email', async () => {
+    it('should throw ValidationException for empty email', async () => {
       await expect(
         useCase.execute({ email: '', password: 'password123' }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for short password', async () => {
+    it('should throw ValidationException for short password', async () => {
       await expect(
         useCase.execute({ email: 'test@test.com', password: 'short' }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException for empty password', async () => {
+    it('should throw ValidationException for empty password', async () => {
       await expect(
         useCase.execute({ email: 'test@test.com', password: '' }),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(ValidationException);
     });
 
     it('should accept valid email and password', async () => {

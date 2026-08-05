@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException } from './not-found.exception';
 
 export class TripNotFoundException extends NotFoundException {
   constructor(tripId: string) {
-    super(`Trip with ID "${tripId}" not found`);
+    super('Trip', tripId);
   }
 }

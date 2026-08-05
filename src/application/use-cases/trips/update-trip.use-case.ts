@@ -1,8 +1,9 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { TripRepositoryPort } from '../../../domain/ports/repositories/trip.repository.port';
 import { TripNotFoundException } from '../../../domain/exceptions/trip-not-found.exception';
 import { UpdateTripDto } from '../../dto/update-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 
 @Injectable()
 export class UpdateTripUseCase {
@@ -30,14 +31,14 @@ export class UpdateTripUseCase {
 
     if (dto.title !== undefined) {
       if (dto.title.trim().length === 0) {
-        throw new BadRequestException('Title cannot be empty');
+        throw new ValidationException('Title cannot be empty');
       }
       updateData.title = dto.title.trim();
     }
 
     if (dto.destination !== undefined) {
       if (dto.destination.trim().length === 0) {
-        throw new BadRequestException('Destination cannot be empty');
+        throw new ValidationException('Destination cannot be empty');
       }
       updateData.destination = dto.destination.trim();
     }
@@ -45,7 +46,7 @@ export class UpdateTripUseCase {
     if (dto.startDate !== undefined) {
       const startDate = new Date(dto.startDate);
       if (isNaN(startDate.getTime())) {
-        throw new BadRequestException('Invalid start date format');
+        throw new ValidationException('Invalid start date format');
       }
       updateData.startDate = startDate;
     }
@@ -53,7 +54,7 @@ export class UpdateTripUseCase {
     if (dto.endDate !== undefined) {
       const endDate = new Date(dto.endDate);
       if (isNaN(endDate.getTime())) {
-        throw new BadRequestException('Invalid end date format');
+        throw new ValidationException('Invalid end date format');
       }
       updateData.endDate = endDate;
     }
@@ -68,7 +69,7 @@ export class UpdateTripUseCase {
 
     if (dto.interests !== undefined) {
       if (dto.interests.length === 0) {
-        throw new BadRequestException('At least one interest is required');
+        throw new ValidationException('At least one interest is required');
       }
       updateData.preferences = {
         interests: dto.interests,

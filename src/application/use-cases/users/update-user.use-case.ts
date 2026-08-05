@@ -1,13 +1,10 @@
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { UpdateUserDto } from '../../dto/update-user.dto';
 import { User } from '../../../domain/entities/user.entity';
 import { UserRole } from '../../../domain/enums/user-role.enum';
+import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
+import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
 
 @Injectable()
 export class UpdateUserUseCase {
@@ -24,7 +21,7 @@ export class UpdateUserUseCase {
     const targetUser = await this.userRepository.findById(id);
 
     if (!targetUser) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('User', id);
     }
 
     const isOwnProfile = currentUser.userId === id;

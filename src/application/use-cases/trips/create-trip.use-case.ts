@@ -1,7 +1,8 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { TripRepositoryPort } from '../../../domain/ports/repositories/trip.repository.port';
 import { CreateTripDto } from '../../dto/create-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 
 @Injectable()
 export class CreateTripUseCase {
@@ -12,38 +13,38 @@ export class CreateTripUseCase {
 
   async execute(dto: CreateTripDto, userId: string): Promise<Trip> {
     if (!dto.title || dto.title.trim().length === 0) {
-      throw new BadRequestException('Title is required');
+      throw new ValidationException('Title is required');
     }
 
     if (!dto.destination || dto.destination.trim().length === 0) {
-      throw new BadRequestException('Destination is required');
+      throw new ValidationException('Destination is required');
     }
 
     if (!dto.startDate) {
-      throw new BadRequestException('Start date is required');
+      throw new ValidationException('Start date is required');
     }
 
     if (!dto.endDate) {
-      throw new BadRequestException('End date is required');
+      throw new ValidationException('End date is required');
     }
 
     if (!dto.interests || dto.interests.length === 0) {
-      throw new BadRequestException('At least one interest is required');
+      throw new ValidationException('At least one interest is required');
     }
 
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
 
     if (isNaN(startDate.getTime())) {
-      throw new BadRequestException('Invalid start date format');
+      throw new ValidationException('Invalid start date format');
     }
 
     if (isNaN(endDate.getTime())) {
-      throw new BadRequestException('Invalid end date format');
+      throw new ValidationException('Invalid end date format');
     }
 
     if (endDate <= startDate) {
-      throw new BadRequestException('End date must be after start date');
+      throw new ValidationException('End date must be after start date');
     }
 
     return this.tripRepository.create({

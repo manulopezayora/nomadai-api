@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '../../../domain/exceptions/unauthorized.exception';
 import * as bcrypt from 'bcryptjs';
 import { createMockJwtService } from '../../../../test/mocks/jwt-service.mock';
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';

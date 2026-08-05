@@ -1,8 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { LoginDto } from '../../dto/login.dto';
+import { UnauthorizedException } from '../../../domain/exceptions/unauthorized.exception';
 
 export interface LoginResult {
   accessToken: string;

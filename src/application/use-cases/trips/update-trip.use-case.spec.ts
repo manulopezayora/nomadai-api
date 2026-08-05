@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import { createMockTripRepository } from '../../../../test/mocks/trip-repository.mock';
 import { createMockTrip } from '../../../../test/mocks/trip.factory';
 import { UpdateTripUseCase } from './update-trip.use-case';
@@ -50,13 +50,13 @@ describe('UpdateTripUseCase', () => {
     });
   });
 
-  it('should throw BadRequestException for empty title', async () => {
+  it('should throw ValidationException for empty title', async () => {
     const trip = createMockTrip({ userId: 'user-1' });
     mockTripRepo.findById.mockResolvedValue(trip);
 
     await expect(
       useCase.execute('trip-1', { title: '  ' }, 'user-1'),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toThrow(ValidationException);
   });
 
   it('should update preferences with new interests', async () => {
@@ -110,12 +110,12 @@ describe('UpdateTripUseCase', () => {
     expect(result.status).toBe('active');
   });
 
-  it('should throw BadRequestException for empty interests', async () => {
+  it('should throw ValidationException for empty interests', async () => {
     const trip = createMockTrip({ userId: 'user-1' });
     mockTripRepo.findById.mockResolvedValue(trip);
 
     await expect(
       useCase.execute('trip-1', { interests: [] }, 'user-1'),
-    ).rejects.toThrow(BadRequestException);
+    ).rejects.toThrow(ValidationException);
   });
 });
