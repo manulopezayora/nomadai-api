@@ -6,6 +6,7 @@ export const createMockUserRepository =
     findById: jest.fn().mockResolvedValue(createMockUser()),
     findByEmail: jest.fn().mockResolvedValue(null),
     findAll: jest.fn().mockResolvedValue([]),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn().mockImplementation((data) =>
       Promise.resolve(
         createMockUser({

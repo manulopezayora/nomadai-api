@@ -45,9 +45,17 @@ export class PrismaUserRepository extends UserRepositoryPort {
     return user ? this.toDomain(user) : null;
   }
 
-  async findAll(): Promise<User[]> {
-    const users = await this.prisma.instance.user.findMany();
+  async findAll(offset: number, limit: number): Promise<User[]> {
+    const users = await this.prisma.instance.user.findMany({
+      skip: offset,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
     return users.map((u) => this.toDomain(u));
+  }
+
+  async count(): Promise<number> {
+    return this.prisma.instance.user.count();
   }
 
   async create(data: CreateUserData): Promise<User> {

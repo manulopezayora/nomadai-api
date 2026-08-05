@@ -23,26 +23,29 @@ describe('UsersController', () => {
 
   describe('findAll', () => {
     it('should return list of users without passwords', async () => {
-      const users = [
-        {
-          id: '1',
-          email: 'user1@test.com',
-          firstName: 'User',
-          role: UserRole.USER,
-        },
-        {
-          id: '2',
-          email: 'admin@test.com',
-          firstName: 'Admin',
-          role: UserRole.ADMIN,
-        },
-      ];
+      const users = {
+        data: [
+          {
+            id: '1',
+            email: 'user1@test.com',
+            firstName: 'User',
+            role: UserRole.USER,
+          },
+          {
+            id: '2',
+            email: 'admin@test.com',
+            firstName: 'Admin',
+            role: UserRole.ADMIN,
+          },
+        ],
+        meta: { total: 2, page: 1, limit: 20, totalPages: 1 },
+      };
       mockListUsersUseCase.execute.mockResolvedValue(users as any);
 
-      const result = await controller.findAll();
+      const result = await controller.findAll({ page: 1, limit: 20 });
 
       expect(result).toEqual(users);
-      expect(mockListUsersUseCase.execute).toHaveBeenCalled();
+      expect(mockListUsersUseCase.execute).toHaveBeenCalledWith(1, 20);
     });
   });
 

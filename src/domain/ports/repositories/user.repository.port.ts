@@ -21,7 +21,8 @@ export interface UpdateUserData {
 export abstract class UserRepositoryPort {
   abstract findById(id: string): Promise<User | null>;
   abstract findByEmail(email: string): Promise<User | null>;
-  abstract findAll(): Promise<User[]>;
+  abstract findAll(offset: number, limit: number): Promise<User[]>;
+  abstract count(): Promise<number>;
   abstract create(data: CreateUserData): Promise<User>;
   abstract update(id: string, data: UpdateUserData): Promise<User>;
   abstract countActiveAdmins(): Promise<number>;

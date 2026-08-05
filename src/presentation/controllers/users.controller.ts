@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -14,6 +15,7 @@ import {
   ApiBearerAuth,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
@@ -23,6 +25,7 @@ import { UserRole } from '../../domain/enums/user-role.enum';
 import { ListUsersUseCase } from '../../application/use-cases/users/list-users.use-case';
 import { UpdateUserUseCase } from '../../application/use-cases/users/update-user.use-case';
 import { UpdateUserDto } from '../../application/dto/update-user.dto';
+import { PaginationDto } from '../../application/dto/pagination.dto';
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -40,11 +43,23 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'List all users (admin only)' })
-  @ApiResponse({ status: 200, description: 'List of users' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 20,
+    description: 'Items per page',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated list of users' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - admin role required' })
-  async findAll() {
-    return this.listUsersUseCase.execute();
+  async findAll(@Query() pagination: PaginationDto) {
+    return this.listUsersUseCase.execute(pagination.page, pagination.limit);
   }
 
   @Patch(':id')

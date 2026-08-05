@@ -15,34 +15,53 @@ describe('ListUsersUseCase', () => {
     useCase = new ListUsersUseCase(mockUserRepo);
   });
 
-  it('should return all users without passwordHash', async () => {
+  it('should return paginated users without passwordHash', async () => {
     const users = [
       createMockUser({ id: '1', email: 'user1@test.com' }),
       createMockAdmin({ id: '2', email: 'admin@test.com' }),
     ];
     mockUserRepo.findAll.mockResolvedValue(users);
+    mockUserRepo.count.mockResolvedValue(2);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(1, 20);
 
-    expect(result).toHaveLength(2);
-    expect(result[0]).not.toHaveProperty('passwordHash');
-    expect(result[1]).not.toHaveProperty('passwordHash');
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0]).not.toHaveProperty('passwordHash');
+    expect(result.data[1]).not.toHaveProperty('passwordHash');
+    expect(result.meta).toEqual({
+      total: 2,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+    });
   });
 
-  it('should return empty array when no users exist', async () => {
+  it('should return empty data when no users exist', async () => {
     mockUserRepo.findAll.mockResolvedValue([]);
+    mockUserRepo.count.mockResolvedValue(0);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(1, 20);
 
-    expect(result).toEqual([]);
+    expect(result.data).toEqual([]);
+    expect(result.meta.total).toBe(0);
   });
 
-  it('should call repository findAll', async () => {
+  it('should call repository findAll with correct offset and limit', async () => {
     mockUserRepo.findAll.mockResolvedValue([]);
+    mockUserRepo.count.mockResolvedValue(0);
 
-    await useCase.execute();
+    await useCase.execute(3, 10);
 
-    expect(mockUserRepo.findAll).toHaveBeenCalled();
+    expect(mockUserRepo.findAll).toHaveBeenCalledWith(20, 10);
+  });
+
+  it('should calculate correct totalPages', async () => {
+    mockUserRepo.findAll.mockResolvedValue([]);
+    mockUserRepo.count.mockResolvedValue(55);
+
+    const result = await useCase.execute(1, 20);
+
+    expect(result.meta.totalPages).toBe(3);
   });
 
   it('should strip passwordHash from all users', async () => {
@@ -51,10 +70,11 @@ describe('ListUsersUseCase', () => {
       passwordHash: '$2b$10$secret',
     });
     mockUserRepo.findAll.mockResolvedValue([userWithPassword]);
+    mockUserRepo.count.mockResolvedValue(1);
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(1, 20);
 
-    expect(result[0]).toEqual({
+    expect(result.data[0]).toEqual({
       id: '1',
       email: 'test@example.com',
       firstName: 'Test',
