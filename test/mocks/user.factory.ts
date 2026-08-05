@@ -24,11 +24,3 @@ export const createMockAdmin = (overrides?: Partial<User>): User =>
     role: UserRole.ADMIN,
     ...overrides,
   });
-
-export const createMockUserWithoutPassword = (
-  overrides?: Partial<User>,
-): Omit<User, 'passwordHash'> => {
-  const user = createMockUser(overrides);
-  const { passwordHash: _, ...rest } = user;
-  return rest;
-};

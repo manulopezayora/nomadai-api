@@ -112,7 +112,7 @@ src/
 │   ├── config/
 │   │   └── env.validation.ts
 │   └── types/                       # Tipos compartidos
-│       └── request-with-user.ts
+│       └── user-payload.ts
 │
 └── main.ts
 ```
@@ -553,7 +553,7 @@ import { TripStatus } from '../../domain/enums/trip-status.enum';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 
 // 4. Shared
-import { UserPayload } from '../../shared/types/request-with-user';
+import { UserPayload } from '../../shared/types/user-payload';
 ```
 
 ---
@@ -648,7 +648,8 @@ describe('SomeUseCase', () => {
 | `createMockAdmin()`          | `test/mocks/user.factory.ts`         | Admin de prueba        |
 | `createMockUserRepository()` | `test/mocks/user-repository.mock.ts` | Mock completo del repo |
 | `createMockJwtService()`     | `test/mocks/jwt-service.mock.ts`     | Mock de JwtService     |
-| `createMockReflector()`      | `test/mocks/reflector.mock.ts`       | Mock de Reflector      |
+| `createMockTrip()`           | `test/mocks/trip.factory.ts`         | Viaje de prueba        |
+| `createMockTripRepository()` | `test/mocks/trip-repository.mock.ts` | Mock completo del repo |
 
 ### Comandos de test
 
