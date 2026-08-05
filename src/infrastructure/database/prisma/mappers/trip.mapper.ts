@@ -1,6 +1,6 @@
 import { Trip, TripPreferences } from '../../../../domain/entities/trip.entity';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { TripStatus } from '../../../../domain/enums/trip-status.enum';
+import { TravelStyle } from '../../../../domain/enums/travel-style.enum';
 
 interface RawTrip {
   id: string;
@@ -11,13 +11,11 @@ interface RawTrip {
   endDate: Date;
   budget: number | null;
   travelerCount: number;
-  preferences: any;
-  status: any;
+  preferences: unknown;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export class TripMapper {
   static toDomain(raw: RawTrip): Trip {
@@ -25,7 +23,7 @@ export class TripMapper {
     const interests = Array.isArray(prefs?.interests)
       ? (prefs.interests as string[])
       : [];
-    const travelStyle = (prefs?.travelStyle as string) ?? 'mid';
+    const travelStyle = (prefs?.travelStyle as TravelStyle) ?? TravelStyle.MID;
 
     return {
       id: raw.id,
@@ -36,8 +34,8 @@ export class TripMapper {
       endDate: raw.endDate,
       budget: raw.budget,
       travelerCount: raw.travelerCount,
-      preferences: { interests, travelStyle } as TripPreferences,
-      status: raw.status as Trip['status'],
+      preferences: { interests, travelStyle },
+      status: raw.status as TripStatus,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     };
@@ -65,7 +63,7 @@ export class TripMapper {
         interests: data.preferences.interests,
         travelStyle: data.preferences.travelStyle,
       },
-      status: 'planning',
+      status: TripStatus.PLANNING,
     };
   }
 

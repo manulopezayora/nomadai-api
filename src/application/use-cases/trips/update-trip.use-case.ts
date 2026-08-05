@@ -6,15 +6,16 @@ import { Trip } from '../../../domain/entities/trip.entity';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
 import { UserRole } from '../../../domain/enums/user-role.enum';
+import { TripStatus } from '../../../domain/enums/trip-status.enum';
 
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  planning: ['active', 'completed'],
-  active: ['completed'],
-  completed: [],
+const VALID_TRANSITIONS: Record<TripStatus, TripStatus[]> = {
+  [TripStatus.PLANNING]: [TripStatus.ACTIVE, TripStatus.COMPLETED],
+  [TripStatus.ACTIVE]: [TripStatus.COMPLETED],
+  [TripStatus.COMPLETED]: [],
 };
 
-const EDITABLE_FIELDS_BY_STATUS: Record<string, string[]> = {
-  planning: [
+const EDITABLE_FIELDS_BY_STATUS: Record<TripStatus, string[]> = {
+  [TripStatus.PLANNING]: [
     'title',
     'destination',
     'startDate',
@@ -25,7 +26,7 @@ const EDITABLE_FIELDS_BY_STATUS: Record<string, string[]> = {
     'travelStyle',
     'status',
   ],
-  active: [
+  [TripStatus.ACTIVE]: [
     'title',
     'budget',
     'travelerCount',
@@ -33,7 +34,7 @@ const EDITABLE_FIELDS_BY_STATUS: Record<string, string[]> = {
     'travelStyle',
     'status',
   ],
-  completed: [],
+  [TripStatus.COMPLETED]: [],
 };
 
 @Injectable()

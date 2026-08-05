@@ -7,6 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TravelStyle } from '../../domain/enums/travel-style.enum';
 
 export class CreateTripDto {
   @ApiProperty({ example: 'Trip to Japan', description: 'Trip title' })
@@ -52,10 +53,10 @@ export class CreateTripDto {
   @ApiPropertyOptional({
     example: 'mid',
     description: 'Travel style',
-    enum: ['budget', 'mid', 'luxury'],
-    default: 'mid',
+    enum: TravelStyle,
+    default: TravelStyle.MID,
   })
-  @IsIn(['budget', 'mid', 'luxury'])
+  @IsIn(Object.values(TravelStyle))
   @IsOptional()
-  travelStyle?: string;
+  travelStyle?: TravelStyle;
 }

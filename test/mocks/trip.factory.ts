@@ -1,4 +1,6 @@
 import { Trip } from '../../src/domain/entities/trip.entity';
+import { TripStatus } from '../../src/domain/enums/trip-status.enum';
+import { TravelStyle } from '../../src/domain/enums/travel-style.enum';
 
 export const createMockTrip = (overrides?: Partial<Trip>): Trip => ({
   id: 'trip-id-123',
@@ -11,9 +13,9 @@ export const createMockTrip = (overrides?: Partial<Trip>): Trip => ({
   travelerCount: 2,
   preferences: {
     interests: ['culture', 'food'],
-    travelStyle: 'mid',
+    travelStyle: TravelStyle.MID,
   },
-  status: 'planning',
+  status: TripStatus.PLANNING,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   ...overrides,

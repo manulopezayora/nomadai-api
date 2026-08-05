@@ -1,4 +1,6 @@
 import { Trip } from '../../entities/trip.entity';
+import { TripStatus } from '../../enums/trip-status.enum';
+import { TravelStyle } from '../../enums/travel-style.enum';
 
 export interface CreateTripData {
   userId: string;
@@ -10,7 +12,7 @@ export interface CreateTripData {
   travelerCount?: number;
   preferences: {
     interests: string[];
-    travelStyle: string;
+    travelStyle: TravelStyle;
   };
 }
 
@@ -23,9 +25,9 @@ export interface UpdateTripData {
   travelerCount?: number;
   preferences?: {
     interests: string[];
-    travelStyle: string;
+    travelStyle: TravelStyle;
   };
-  status?: string;
+  status?: TripStatus;
 }
 
 export abstract class TripRepositoryPort {

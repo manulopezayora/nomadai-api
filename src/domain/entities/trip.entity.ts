@@ -1,3 +1,9 @@
+import { TripStatus } from '../enums/trip-status.enum';
+import { TravelStyle } from '../enums/travel-style.enum';
+
+export { TripStatus } from '../enums/trip-status.enum';
+export { TravelStyle } from '../enums/travel-style.enum';
+
 export interface Trip {
   id: string;
   userId: string;
@@ -15,7 +21,5 @@ export interface Trip {
 
 export interface TripPreferences {
   interests: string[];
-  travelStyle: 'budget' | 'mid' | 'luxury';
+  travelStyle: TravelStyle;
 }
-
-export type TripStatus = 'planning' | 'active' | 'completed';

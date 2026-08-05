@@ -148,7 +148,7 @@ Representa el viaje creado por el usuario.
 | budget        | Float?             | Presupuesto estimado                                      |
 | travelerCount | Int                | Número de viajeros (default 1)                            |
 | preferences   | Json               | { interests: [], travelStyle: "budget"\|"mid"\|"luxury" } |
-| status        | String             | "planning" \| "active" \| "completed"                     |
+| status        | TripStatus (enum)  | PLANNING \| ACTIVE \| COMPLETED                           |
 | createdAt     | DateTime           |                                                           |
 | updatedAt     | DateTime           |                                                           |
 
@@ -561,7 +561,7 @@ nomadai-api/
 │           └── user-payload.ts
 │
 ├── prisma/
-│   ├── schema.prisma            # 6 modelos + UserRole enum
+│   ├── schema.prisma            # 6 modelos + UserRole + TripStatus enums
 │   ├── seed.ts                  # Seed script (admin user)
 │   └── migrations/              # Migraciones generadas
 │

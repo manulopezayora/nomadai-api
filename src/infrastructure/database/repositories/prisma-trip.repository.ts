@@ -64,8 +64,7 @@ export class PrismaTripRepository extends TripRepositoryPort {
         travelerCount: data.travelerCount ?? 1,
         preferences: {
           interests: data.preferences.interests,
-          travelStyle: data.preferences.travelStyle as
-            'budget' | 'mid' | 'luxury',
+          travelStyle: data.preferences.travelStyle,
         },
       }) as any,
     });

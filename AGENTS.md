@@ -538,6 +538,31 @@ Si alguno falla, **corregir antes de continuar**.
 
 ---
 
+## Uso de Enums
+
+**Siempre** usar enums de dominio en vez de string literals en todo el proyecto:
+
+- **Entidades**: Los campos con valores predefinidos deben tiparse con el enum, no con union types de strings
+- **DTOs**: Usar `enum: EnumType` en `@ApiProperty` y `@IsIn(Object.values(EnumType))` en validación
+- **Use Cases**: Usar los valores del enum (`Enum.VALUE`) en vez de strings (`'value'`)
+- **Repositorios**: Los puertos deben tipar los campos con el enum, no con `string`
+- **Prisma Schema**: Usar el tipo enum de Prisma en vez de `String` para campos con valores fijos
+- **Tests y Mocks**: Usar los valores del enum en vez de strings
+
+```typescript
+// ❌ INCORRECTO - string literal
+status: 'planning';
+travelStyle: 'mid';
+
+// ✅ CORRECTO - enum
+status: TripStatus.PLANNING;
+travelStyle: TravelStyle.MID;
+```
+
+Si un campo tiene valores predefinidos, **crear un enum** en `domain/enums/` y reutilizarlo en todas las capas.
+
+---
+
 ## Imports: Orden y Convención
 
 ```typescript

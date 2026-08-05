@@ -14,6 +14,12 @@ enum UserRole {
   ADMIN
 }
 
+enum TripStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+}
+
 // ─── User ───────────────────────────────────────────────────────────
 
 model User {
@@ -47,7 +53,7 @@ model Trip {
   budget         Float?
   travelerCount  Int      @default(1) @map("traveler_count")
   preferences    Json
-  status         String   @default("planning")
+  status         TripStatus @default(PLANNING)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

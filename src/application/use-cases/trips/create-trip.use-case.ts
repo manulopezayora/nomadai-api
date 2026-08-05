@@ -3,6 +3,7 @@ import { TripRepositoryPort } from '../../../domain/ports/repositories/trip.repo
 import { CreateTripDto } from '../../dto/create-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { TravelStyle } from '../../../domain/enums/travel-style.enum';
 
 @Injectable()
 export class CreateTripUseCase {
@@ -57,7 +58,7 @@ export class CreateTripUseCase {
       travelerCount: dto.travelerCount ?? 1,
       preferences: {
         interests: dto.interests,
-        travelStyle: dto.travelStyle ?? 'mid',
+        travelStyle: dto.travelStyle ?? TravelStyle.MID,
       },
     });
   }
