@@ -1,4 +1,5 @@
 import { UnauthorizedException } from '../../../domain/exceptions/unauthorized.exception';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 import * as bcrypt from 'bcryptjs';
 import { createMockJwtService } from '../../../../test/mocks/jwt-service.mock';
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
@@ -17,6 +18,26 @@ describe('LoginUseCase', () => {
     mockJwtService = createMockJwtService();
     useCase = new LoginUseCase(mockUserRepo, mockJwtService);
     jest.clearAllMocks();
+  });
+
+  describe('validation', () => {
+    it('should throw ValidationException for invalid email format', async () => {
+      await expect(
+        useCase.execute({ email: 'not-an-email', password: 'password123' }),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should throw ValidationException for empty email', async () => {
+      await expect(
+        useCase.execute({ email: '', password: 'password123' }),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should throw ValidationException for missing password', async () => {
+      await expect(
+        useCase.execute({ email: 'test@test.com', password: '' }),
+      ).rejects.toThrow(ValidationException);
+    });
   });
 
   describe('invalid credentials', () => {

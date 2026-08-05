@@ -4,6 +4,7 @@ import * as bcrypt from 'bcryptjs';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { LoginDto } from '../../dto/login.dto';
 import { UnauthorizedException } from '../../../domain/exceptions/unauthorized.exception';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 
 export interface LoginResult {
   accessToken: string;
@@ -26,6 +27,14 @@ export class LoginUseCase {
   ) {}
 
   async execute(dto: LoginDto): Promise<LoginResult> {
+    if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
+      throw new ValidationException('Invalid email format');
+    }
+
+    if (!dto.password) {
+      throw new ValidationException('Password is required');
+    }
+
     const user = await this.userRepository.findByEmail(dto.email);
 
     if (!user || !user.passwordHash) {

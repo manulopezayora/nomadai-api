@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
@@ -47,6 +48,30 @@ export class TripsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new trip' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'destination', 'startDate', 'endDate', 'interests'],
+      properties: {
+        title: { type: 'string', example: 'Trip to Japan' },
+        destination: { type: 'string', example: 'Tokyo' },
+        startDate: { type: 'string', example: '2026-09-15' },
+        endDate: { type: 'string', example: '2026-09-25' },
+        budget: { type: 'number', example: 2000 },
+        travelerCount: { type: 'number', example: 2, default: 1 },
+        interests: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['culture', 'food'],
+        },
+        travelStyle: {
+          type: 'string',
+          enum: ['budget', 'mid', 'luxury'],
+          example: 'mid',
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 201, description: 'Trip created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -75,6 +100,34 @@ export class TripsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a trip' })
   @ApiParam({ name: 'id', description: 'Trip ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Updated Trip' },
+        destination: { type: 'string', example: 'Osaka' },
+        startDate: { type: 'string', example: '2026-09-15' },
+        endDate: { type: 'string', example: '2026-09-25' },
+        budget: { type: 'number', example: 2500 },
+        travelerCount: { type: 'number', example: 3 },
+        interests: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['culture', 'food', 'shopping'],
+        },
+        travelStyle: {
+          type: 'string',
+          enum: ['budget', 'mid', 'luxury'],
+          example: 'luxury',
+        },
+        status: {
+          type: 'string',
+          enum: ['planning', 'active', 'completed'],
+          example: 'active',
+        },
+      },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Trip updated successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

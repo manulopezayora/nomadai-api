@@ -39,6 +39,7 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid email or password' })
   @ApiResponse({ status: 409, description: 'Email already registered' })
   async register(@Body() dto: RegisterDto) {
     const user = await this.registerUseCase.execute(dto);
@@ -60,6 +61,7 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 200, description: 'Login successful, returns JWT' })
+  @ApiResponse({ status: 400, description: 'Invalid email format' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() dto: LoginDto) {
     return this.loginUseCase.execute(dto);
