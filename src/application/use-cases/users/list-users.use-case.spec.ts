@@ -63,6 +63,7 @@ describe('ListUsersUseCase', () => {
       provider: 'local',
       providerId: null,
       role: 'USER',
+      isActive: true,
       createdAt: expect.any(Date),
       updatedAt: expect.any(Date),
     });

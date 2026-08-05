@@ -20,6 +20,7 @@ interface RawUser {
   provider: string;
   providerId: string | null;
   role: any;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,6 +83,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
       provider: raw.provider,
       providerId: raw.providerId,
       role: raw.role as UserRole,
+      isActive: raw.isActive,
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     };

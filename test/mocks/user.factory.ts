@@ -11,6 +11,7 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   provider: 'local',
   providerId: null,
   role: UserRole.USER,
+  isActive: true,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   ...overrides,

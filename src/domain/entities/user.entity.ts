@@ -10,6 +10,7 @@ export interface User {
   provider: string;
   providerId: string | null;
   role: UserRole;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

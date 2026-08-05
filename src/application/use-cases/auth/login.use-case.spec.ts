@@ -70,6 +70,19 @@ describe('LoginUseCase', () => {
         useCase.execute({ email: 'test@test.com', password: 'wrongpassword' }),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it('should throw UnauthorizedException for inactive user', async () => {
+      const user = createMockUser({
+        passwordHash: '$2b$10$hashedpassword',
+        isActive: false,
+      });
+      mockUserRepo.findByEmail.mockResolvedValue(user);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      await expect(
+        useCase.execute({ email: 'test@test.com', password: 'password123' }),
+      ).rejects.toThrow(UnauthorizedException);
+    });
   });
 
   describe('successful login', () => {

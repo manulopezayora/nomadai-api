@@ -129,6 +129,7 @@ Almacena la información de cuenta y las preferencias de IA.
 | provider     | String          | "local" o "google"                 |
 | providerId   | String?         | ID del proveedor OAuth             |
 | role         | UserRole (enum) | "USER" o "ADMIN" (default: USER)   |
+| isActive     | Boolean         | Soft delete (default: true)        |
 | createdAt    | DateTime        | Fecha de creación                  |
 | updatedAt    | DateTime        | Fecha de actualización             |
 
