@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  CreateUser_data,
-  UpdateUser_data,
+  CreateUserData,
+  UpdateUserData,
   UserRepositoryPort,
 } from '../../../domain/ports/repositories/user.repository.port';
 import { User } from '../../../domain/entities/user.entity';
@@ -49,7 +49,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
     return users.map((u) => this.toDomain(u));
   }
 
-  async create(data: CreateUser_data): Promise<User> {
+  async create(data: CreateUserData): Promise<User> {
     const user = await this.prisma.instance.user.create({
       data: {
         email: data.email,
@@ -63,7 +63,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
     return this.toDomain(user);
   }
 
-  async update(id: string, data: UpdateUser_data): Promise<User> {
+  async update(id: string, data: UpdateUserData): Promise<User> {
     const user = await this.prisma.instance.user.update({
       where: { id },
       data,
