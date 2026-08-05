@@ -11,20 +11,20 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - nomadai-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d nomadai"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d nomadai']
       interval: 5s
       timeout: 2s
       retries: 20
     logging:
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'
 
   # ============================================================
   # NestJS Application (Development Mode)
@@ -35,8 +35,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: nomadai-app
     ports:
-      - "3000:3000"
-      - "9229:9229"
+      - '3000:3000'
+      - '9229:9229'
     volumes:
       - .:/app
       - /app/node_modules
@@ -47,12 +47,12 @@ services:
       - .env
     environment:
       NODE_ENV: development
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/nomadai?schema=public"
+      DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/nomadai?schema=public'
     networks:
       - nomadai-network
     command: >
       sh -c "pnpm prisma generate &&
-             pnpm prisma migrate dev --name init &&
+             pnpm prisma migrate deploy &&
              pnpm tsx watch src/main.ts"
     stdin_open: true
     tty: true
