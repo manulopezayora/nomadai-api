@@ -4,7 +4,7 @@
 
 **Nomad AI** es una aplicación inteligente para la planificación de viajes personalizada.
 Un planificador de viajes "Zero-Effort" donde el usuario ingresa un prompt en lenguaje natural
-(ej. *"10 días en Japón, cultura y relax"*) y la aplicación genera un itinerario completo
+(ej. _"10 días en Japón, cultura y relax"_) y la aplicación genera un itinerario completo
 dividido por días, mapeado geográficamente en un mapa interactivo y con cotización de vuelos
 y hoteles recomendados.
 
@@ -27,29 +27,39 @@ y hoteles recomendados.
 
 ## Stack Tecnológico
 
-| Capa | Tecnología | Versión | Notas |
-|------|-----------|---------|-------|
-| **Framework** | NestJS | ^11.0.1 | Backend REST |
-| **Language** | TypeScript | ^5.7.3 | |
-| **ORM** | Prisma | ^7.9.1 | Mejor que TypeORM para nuevos proyectos (2025-2026) |
-| **Base de datos** | PostgreSQL | - | Con campos JSONB y coordenadas lat/lng |
-| **IA** | Google Gemini | - | SDK `@google/genai` ^2.15.0 (NO el deprecated `@google/generative-ai`) |
-| **Auth** | Passport.js | ^0.7.0 | Estrategias: Local + Google OAuth + JWT |
-| **Validación** | class-validator + class-transformer | ^0.14.x | DTOs |
-| **Config** | @nestjs/config + Joi | ^4.0.0 | Variables de entorno seguras |
-| **Testing** | Jest + Supertest | ^30.0.0 | Unit + E2E |
-| **Linting** | ESLint + Prettier | ^9.18.0 | Ya configurado |
-| **Mapas (fase 2)** | Leaflet + OpenStreetMap | - | Gratuito, sin API key (alternativa a Google Maps) |
-| **Package Manager** | pnpm | - | Con workspace |
+| Capa                | Tecnología                          | Versión | Notas                                                                  |
+| ------------------- | ----------------------------------- | ------- | ---------------------------------------------------------------------- |
+| **Framework**       | NestJS                              | ^11.0.1 | Backend REST                                                           |
+| **Language**        | TypeScript                          | ^5.7.3  |                                                                        |
+| **ORM**             | Prisma                              | ^7.9.1  | Mejor que TypeORM para nuevos proyectos (2025-2026)                    |
+| **Base de datos**   | PostgreSQL                          | -       | Con campos JSONB y coordenadas lat/lng                                 |
+| **IA**              | Google Gemini                       | -       | SDK `@google/genai` ^2.15.0 (NO el deprecated `@google/generative-ai`) |
+| **Auth**            | Passport.js                         | ^0.7.0  | Estrategias: Local + Google OAuth + JWT                                |
+| **Validación**      | class-validator + class-transformer | ^0.14.x | DTOs                                                                   |
+| **Config**          | @nestjs/config + Joi                | ^4.0.0  | Variables de entorno seguras                                           |
+| **Testing**         | Jest + Supertest                    | ^30.0.0 | Unit + E2E                                                             |
+| **Linting**         | ESLint + Prettier                   | ^9.18.0 | Ya configurado                                                         |
+| **API Docs**        | @nestjs/swagger                     | ^11.4.6 | OpenAPI 3.0 docs en `/api`                                             |
+| **Mapas (fase 2)**  | Leaflet + OpenStreetMap             | -       | Gratuito, sin API key (alternativa a Google Maps)                      |
+| **Package Manager** | pnpm                                | -       | Con workspace                                                          |
 
 ### Decisiones Clave de Stack
 
-| Decisión | Alternativa descartada | Motivo |
-|----------|----------------------|--------|
-| **Prisma > TypeORM** | TypeORM ^1.0 | Prisma tiene mejor DX, type safety, migraciones declarativas, 83% más descargas en npm (2026) |
-| **`@google/genai` > `@google/generative-ai`** | `@google/generative-ai` | Deprecated desde agosto 2025. El nuevo SDK soporta Gemini 2.0+ |
-| **Leaflet > Google Maps** | Google Maps SDK | Leaflet es gratuito, sin API key, open source. Google Maps requiere billing |
-| **Passport.js > custom auth** | Auth manual | Estándar de la industria, bien mantenido, múltiples estrategias |
+| Decisión                                      | Alternativa descartada  | Motivo                                                                                        |
+| --------------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------- |
+| **Prisma > TypeORM**                          | TypeORM ^1.0            | Prisma tiene mejor DX, type safety, migraciones declarativas, 83% más descargas en npm (2026) |
+| **`@google/genai` > `@google/generative-ai`** | `@google/generative-ai` | Deprecated desde agosto 2025. El nuevo SDK soporta Gemini 2.0+                                |
+| **Leaflet > Google Maps**                     | Google Maps SDK         | Leaflet es gratuito, sin API key, open source. Google Maps requiere billing                   |
+| **Passport.js > custom auth**                 | Auth manual             | Estándar de la industria, bien mantenido, múltiples estrategias                               |
+
+### Nota sobre Prisma 7 + tsx
+
+El proyecto usa `tsx` como runtime de desarrollo (en lugar de `nest start:watch`) para
+compatibilidad con Prisma 7 `prisma-client` generator que genera código ESM con `import.meta.url`.
+
+**Implicación para Swagger:** `tsx` usa `esbuild` que NO emite `emitDecoratorMetadata`.
+Por eso `@ApiBody({ type: DtoClass })` causa circular dependency. La solución es usar
+schemas inline: `@ApiBody({ schema: { ... } })`. Ver `AGENTS.md` para más detalles.
 
 ### Nota sobre Amadeus API
 
@@ -93,12 +103,12 @@ Frontend (Vue)
 
 ## Diseño de Pantallas (UX/UI Workflow)
 
-| # | Pantalla | Descripción |
-|---|----------|-------------|
-| 1 | **Onboarding / Generador** | Input central tipo "prompt" minimalista con tarjetas de sugerencias predefinidas para capturar la intención del viaje |
-| 2 | **Dashboard del Itinerario** | Vista dividida (Split-Screen). A la izquierda, acordeón por días con actividades; a la derecha, mapa interactivo con marcadores y conectores de ruta |
-| 3 | **Módulo de Vuelos + Chat Flotante** | Despliegue de opciones de vuelos integradas junto con un asistente virtual flotante para refinamiento en caliente |
-| 4 | **Vista Colaborativa y Presupuesto** | Trazado completo de la ruta entre ciudades (ej. Tokio → Kioto → Osaka), lista de colaboradores y desglose gráfico de presupuesto |
+| #   | Pantalla                             | Descripción                                                                                                                                          |
+| --- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Onboarding / Generador**           | Input central tipo "prompt" minimalista con tarjetas de sugerencias predefinidas para capturar la intención del viaje                                |
+| 2   | **Dashboard del Itinerario**         | Vista dividida (Split-Screen). A la izquierda, acordeón por días con actividades; a la derecha, mapa interactivo con marcadores y conectores de ruta |
+| 3   | **Módulo de Vuelos + Chat Flotante** | Despliegue de opciones de vuelos integradas junto con un asistente virtual flotante para refinamiento en caliente                                    |
+| 4   | **Vista Colaborativa y Presupuesto** | Trazado completo de la ruta entre ciudades (ej. Tokio → Kioto → Osaka), lista de colaboradores y desglose gráfico de presupuesto                     |
 
 ---
 
@@ -108,159 +118,254 @@ Frontend (Vue)
 
 Almacena la información de cuenta y las preferencias de IA.
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| email | String (unique) | Email del usuario |
-| passwordHash | String? | Hash de contraseña (null si OAuth) |
-| firstName | String? | Nombre |
-| lastName | String? | Apellido |
-| avatarUrl | String? | URL de avatar (de Google OAuth) |
-| provider | String | "local" o "google" |
-| providerId | String? | ID del proveedor OAuth |
-| createdAt | DateTime | Fecha de creación |
-| updatedAt | DateTime | Fecha de actualización |
+| Campo        | Tipo            | Descripción                        |
+| ------------ | --------------- | ---------------------------------- |
+| id           | String (cuid)   | PK                                 |
+| email        | String (unique) | Email del usuario                  |
+| passwordHash | String?         | Hash de contraseña (null si OAuth) |
+| firstName    | String?         | Nombre                             |
+| lastName     | String?         | Apellido                           |
+| avatarUrl    | String?         | URL de avatar (de Google OAuth)    |
+| provider     | String          | "local" o "google"                 |
+| providerId   | String?         | ID del proveedor OAuth             |
+| role         | UserRole (enum) | "USER" o "ADMIN" (default: USER)   |
+| isActive     | Boolean         | Soft delete (default: true)        |
+| createdAt    | DateTime        | Fecha de creación                  |
+| updatedAt    | DateTime        | Fecha de actualización             |
 
 ### Entidad: Trip (Viaje)
 
 Representa el viaje creado por el usuario.
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| userId | String (FK → User) | Usuario propietario |
-| title | String | Título del viaje |
-| destination | String | Destino principal |
-| startDate | DateTime | Fecha de inicio |
-| endDate | DateTime | Fecha de fin |
-| budget | Float? | Presupuesto estimado |
-| travelerCount | Int | Número de viajeros (default 1) |
-| preferences | Json | { interests: [], travelStyle: "budget"\|"mid"\|"luxury" } |
-| status | String | "planning" \| "active" \| "completed" |
-| createdAt | DateTime | |
-| updatedAt | DateTime | |
+| Campo         | Tipo               | Descripción                                               |
+| ------------- | ------------------ | --------------------------------------------------------- |
+| id            | String (cuid)      | PK                                                        |
+| userId        | String (FK → User) | Usuario propietario                                       |
+| title         | String             | Título del viaje                                          |
+| destination   | String             | Destino principal                                         |
+| startDate     | DateTime           | Fecha de inicio                                           |
+| endDate       | DateTime           | Fecha de fin                                              |
+| budget        | Float?             | Presupuesto estimado                                      |
+| travelerCount | Int                | Número de viajeros (default 1)                            |
+| preferences   | Json               | { interests: [], travelStyle: "budget"\|"mid"\|"luxury" } |
+| status        | TripStatus (enum)  | PLANNING \| ACTIVE \| COMPLETED                           |
+| createdAt     | DateTime           |                                                           |
+| updatedAt     | DateTime           |                                                           |
 
 ### Entidad: DayPlan (Día de Itinerario)
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| tripId | String (FK → Trip) | Viaje al que pertenece |
-| dayNumber | Int | Número de día (1, 2, 3...) |
-| date | DateTime | Fecha del día |
-| title | String? | "Llegada a Tokio", "Día en Kioto" |
-| notes | String? | Notas adicionales |
-| createdAt | DateTime | |
-| updatedAt | DateTime | |
+| Campo     | Tipo               | Descripción                       |
+| --------- | ------------------ | --------------------------------- |
+| id        | String (cuid)      | PK                                |
+| tripId    | String (FK → Trip) | Viaje al que pertenece            |
+| dayNumber | Int                | Número de día (1, 2, 3...)        |
+| date      | DateTime           | Fecha del día                     |
+| title     | String?            | "Llegada a Tokio", "Día en Kioto" |
+| notes     | String?            | Notas adicionales                 |
+| createdAt | DateTime           |                                   |
+| updatedAt | DateTime           |                                   |
 
 ### Entidad: Activity (Actividad / Punto en Mapa)
 
 Cada ubicación específica que se renderizará en el mapa.
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| dayPlanId | String (FK → DayPlan) | Día al que pertenece |
-| title | String | Nombre de la actividad |
-| description | String? | Descripción detallada |
-| location | String? | Nombre del lugar |
-| latitude | Float? | Latitud (para Leaflet/OpenStreetMap) |
-| longitude | Float? | Longitud (para Leaflet/OpenStreetMap) |
-| startTime | String? | Hora de inicio "09:00" |
-| endTime | String? | Hora de fin "12:00" |
-| cost | Float? | Costo estimado |
-| bookingUrl | String? | Link externo para reservar |
-| category | String? | "museum" \| "restaurant" \| "temple" \| "shopping" \| "transport" |
-| placeId | String? | ID genérico de lugar (reemplaza googlePlaceId) |
-| order | Int | Orden dentro del día |
-| createdAt | DateTime | |
-| updatedAt | DateTime | |
+| Campo       | Tipo                  | Descripción                                                       |
+| ----------- | --------------------- | ----------------------------------------------------------------- |
+| id          | String (cuid)         | PK                                                                |
+| dayPlanId   | String (FK → DayPlan) | Día al que pertenece                                              |
+| title       | String                | Nombre de la actividad                                            |
+| description | String?               | Descripción detallada                                             |
+| location    | String?               | Nombre del lugar                                                  |
+| latitude    | Float?                | Latitud (para Leaflet/OpenStreetMap)                              |
+| longitude   | Float?                | Longitud (para Leaflet/OpenStreetMap)                             |
+| startTime   | String?               | Hora de inicio "09:00"                                            |
+| endTime     | String?               | Hora de fin "12:00"                                               |
+| cost        | Float?                | Costo estimado                                                    |
+| bookingUrl  | String?               | Link externo para reservar                                        |
+| category    | String?               | "museum" \| "restaurant" \| "temple" \| "shopping" \| "transport" |
+| placeId     | String?               | ID genérico de lugar (reemplaza googlePlaceId)                    |
+| order       | Int                   | Orden dentro del día                                              |
+| createdAt   | DateTime              |                                                                   |
+| updatedAt   | DateTime              |                                                                   |
 
 ### Entidad: FlightRecommendation (Recomendación de Vuelo)
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| tripId | String (FK → Trip) | Viaje al que pertenece |
-| airline | String | Aerolínea |
-| departure | String | Aeropuerto de salida |
-| arrival | String | Aeropuerto de llegada |
-| departureTime | String | Hora de salida |
-| arrivalTime | String | Hora de llegada |
-| price | Float? | Precio estimado |
-| currency | String | "EUR" (default) |
-| bookingUrl | String? | Link a Google Flights / Skyscanner |
-| notes | String? | Notas |
-| isRecommended | Boolean | Si es la recomendación principal |
-| createdAt | DateTime | |
+| Campo         | Tipo               | Descripción                        |
+| ------------- | ------------------ | ---------------------------------- |
+| id            | String (cuid)      | PK                                 |
+| tripId        | String (FK → Trip) | Viaje al que pertenece             |
+| airline       | String             | Aerolínea                          |
+| departure     | String             | Aeropuerto de salida               |
+| arrival       | String             | Aeropuerto de llegada              |
+| departureTime | String             | Hora de salida                     |
+| arrivalTime   | String             | Hora de llegada                    |
+| price         | Float?             | Precio estimado                    |
+| currency      | String             | "EUR" (default)                    |
+| bookingUrl    | String?            | Link a Google Flights / Skyscanner |
+| notes         | String?            | Notas                              |
+| isRecommended | Boolean            | Si es la recomendación principal   |
+| createdAt     | DateTime           |                                    |
 
 ### Entidad: HotelRecommendation (Recomendación de Hotel)
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| id | String (cuid) | PK |
-| tripId | String (FK → Trip) | Viaje al que pertenece |
-| name | String | Nombre del hotel |
-| location | String | Ubicación |
-| latitude | Float? | Latitud |
-| longitude | Float? | Longitud |
-| pricePerNight | Float? | Precio por noche |
-| currency | String | "EUR" (default) |
-| rating | Float? | Valoración |
-| amenities | String[] | ["wifi", "pool", "breakfast"] |
-| bookingUrl | String? | Link a Booking.com / Hotels.com |
-| isRecommended | Boolean | Si es la recomendación principal |
-| createdAt | DateTime | |
+| Campo         | Tipo               | Descripción                      |
+| ------------- | ------------------ | -------------------------------- |
+| id            | String (cuid)      | PK                               |
+| tripId        | String (FK → Trip) | Viaje al que pertenece           |
+| name          | String             | Nombre del hotel                 |
+| location      | String             | Ubicación                        |
+| latitude      | Float?             | Latitud                          |
+| longitude     | Float?             | Longitud                         |
+| pricePerNight | Float?             | Precio por noche                 |
+| currency      | String             | "EUR" (default)                  |
+| rating        | Float?             | Valoración                       |
+| amenities     | String[]           | ["wifi", "pool", "breakfast"]    |
+| bookingUrl    | String?            | Link a Booking.com / Hotels.com  |
+| isRecommended | Boolean            | Si es la recomendación principal |
+| createdAt     | DateTime           |                                  |
 
 ---
 
 ## API Endpoints
 
+### Documentación Swagger/OpenAPI
+
+La documentación interactiva de la API está disponible en:
+
+- **URL**: `http://localhost:3000/api`
+- **Formato**: OpenAPI 3.0
+- **Autenticación**: Bearer token (JWT) para endpoints protegidos
+
+Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiProperty`) para generar documentación completa y automáticamente actualizada.
+
 ### Auth
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/auth/register` | Registro email+contraseña | No |
-| POST | `/auth/login` | Login, retorna JWT en cookie | No |
-| GET | `/auth/google` | Redirige a Google OAuth | No |
-| GET | `/auth/google/callback` | Callback de Google, retorna JWT | No |
-| POST | `/auth/logout` | Borra cookie de JWT | Sí |
+| Método | Ruta                    | Descripción                     | Auth |
+| ------ | ----------------------- | ------------------------------- | ---- |
+| POST   | `/auth/register`        | Registro email+contraseña       | No   |
+| POST   | `/auth/login`           | Login, retorna JWT en cookie    | No   |
+| GET    | `/auth/google`          | Redirige a Google OAuth         | No   |
+| GET    | `/auth/google/callback` | Callback de Google, retorna JWT | No   |
+| POST   | `/auth/logout`          | Borra cookie de JWT             | Sí   |
 
 ### Users
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| GET | `/users/me` | Perfil del usuario actual | Sí |
+| Método | Ruta        | Descripción               | Auth |
+| ------ | ----------- | ------------------------- | ---- |
+| GET    | `/users/me` | Perfil del usuario actual | Sí   |
 
 ### Trips
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/trips` | Crear viaje | Sí |
-| GET | `/trips` | Listar viajes del usuario | Sí |
-| GET | `/trips/:id` | Detalle de viaje con días y actividades | Sí |
-| PATCH | `/trips/:id` | Actualizar viaje | Sí |
-| DELETE | `/trips/:id` | Eliminar viaje (cascade) | Sí |
+| Método | Ruta               | Descripción                             | Auth  |
+| ------ | ------------------ | --------------------------------------- | ----- |
+| POST   | `/trips`           | Crear viaje                             | Sí    |
+| GET    | `/trips`           | Listar viajes del usuario (paginado)    | Sí    |
+| GET    | `/trips/admin/all` | Listar todos los viajes (solo ADMIN)    | ADMIN |
+| GET    | `/trips/:id`       | Detalle de viaje con días y actividades | Sí    |
+| PATCH  | `/trips/:id`       | Actualizar viaje                        | Sí    |
+| DELETE | `/trips/:id`       | Eliminar viaje (cascade)                | Sí    |
 
 ### Day Plans
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/trips/:tripId/days` | Añadir día al viaje | Sí |
-| PATCH | `/trips/:tripId/days/:dayId` | Actualizar día | Sí |
-| DELETE | `/trips/:tripId/days/:dayId` | Eliminar día | Sí |
-| POST | `/trips/:tripId/days/:dayId/activities` | Añadir actividad al día | Sí |
-| PATCH | `/trips/:tripId/days/:dayId/activities/:activityId` | Actualizar actividad | Sí |
-| DELETE | `/trips/:tripId/days/:dayId/activities/:activityId` | Eliminar actividad | Sí |
+| Método | Ruta                                                | Descripción             | Auth |
+| ------ | --------------------------------------------------- | ----------------------- | ---- |
+| POST   | `/trips/:tripId/days`                               | Añadir día al viaje     | Sí   |
+| PATCH  | `/trips/:tripId/days/:dayId`                        | Actualizar día          | Sí   |
+| DELETE | `/trips/:tripId/days/:dayId`                        | Eliminar día            | Sí   |
+| POST   | `/trips/:tripId/days/:dayId/activities`             | Añadir actividad al día | Sí   |
+| PATCH  | `/trips/:tripId/days/:dayId/activities/:activityId` | Actualizar actividad    | Sí   |
+| DELETE | `/trips/:tripId/days/:dayId/activities/:activityId` | Eliminar actividad      | Sí   |
 
 ### Gemini (Recomendaciones IA)
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/trips/:tripId/recommend/flights` | Recomendar vuelos con IA | Sí |
-| POST | `/trips/:tripId/recommend/hotels` | Recomendar hoteles con IA | Sí |
-| POST | `/trips/:tripId/recommend/itinerary` | Generar itinerario día a día | Sí |
-| POST | `/trips/:tripId/recommend/activities` | Recomendar actividades | Sí |
+| Método | Ruta                                  | Descripción                  | Auth |
+| ------ | ------------------------------------- | ---------------------------- | ---- |
+| POST   | `/trips/:tripId/recommend/flights`    | Recomendar vuelos con IA     | Sí   |
+| POST   | `/trips/:tripId/recommend/hotels`     | Recomendar hoteles con IA    | Sí   |
+| POST   | `/trips/:tripId/recommend/itinerary`  | Generar itinerario día a día | Sí   |
+| POST   | `/trips/:tripId/recommend/activities` | Recomendar actividades       | Sí   |
+
+---
+
+## Reglas de Negocio — User Management
+
+### Permisos de edición
+
+| Actor         | Campos editables                                       | Campos bloqueados                  |
+| ------------- | ------------------------------------------------------ | ---------------------------------- |
+| **Visitante** | —                                                      | — (solo puede registrarse)         |
+| **USER**      | firstName, lastName, avatarUrl (solo su propio perfil) | role, isActive                     |
+| **ADMIN**     | Todos los campos en OTROS usuarios                     | role, isActive en SU PROPIO perfil |
+
+### Reglas de seguridad
+
+| #   | Regla                                          | Protege contra                           |
+| --- | ---------------------------------------------- | ---------------------------------------- |
+| 1   | Admin no puede cambiar su propio `role`        | Auto-demotion accidental → lockout       |
+| 2   | Admin no puede cambiar su propio `isActive`    | Auto-desactivación accidental → lockout  |
+| 3   | No se puede desactivar al último admin activo  | Lockout del sistema (0 admins)           |
+| 4   | Solo admins pueden cambiar `role` e `isActive` | Usuarios normales promoviendo privileges |
+
+### Escenarios cubiertos
+
+- **Admin promociona a otro usuario**: ✅ Permitido
+- **Admin desactiva a otro admin** (hay más admins activos): ✅ Permitido
+- **Admin se desactiva a sí mismo**: ❌ Bloqueado (regla 2)
+- **Admin se demotiona a sí mismo**: ❌ Bloqueado (regla 1)
+- **Último admin intenta desactivar a otro admin**: ❌ Bloqueado (regla 3)
+- **Usuario normal intenta cambiar role/isActive**: ❌ Bloqueado (regla 4)
+
+---
+
+## Reglas de Negocio — Trip Management
+
+### Permisos de edición por rol
+
+| Actor     | Campos editables                                                  | Campos bloqueados |
+| --------- | ----------------------------------------------------------------- | ----------------- |
+| **USER**  | Todos (solo en viajes propios, sujeto a restricciones de status)  | —                 |
+| **ADMIN** | Todos los campos, en cualquier viaje, sin restricciones de status | —                 |
+
+### Restricciones de status (solo USER)
+
+| Status actual | Campos editables                                                                              | Campos bloqueados               |
+| ------------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
+| **planning**  | title, destination, startDate, endDate, budget, travelerCount, interests, travelStyle, status | —                               |
+| **active**    | title, budget, travelerCount, interests, travelStyle, status                                  | destination, startDate, endDate |
+| **completed** | — (solo lectura)                                                                              | Todos                           |
+
+### Transiciones de status válidas (solo USER)
+
+| De        | Hacia     | Permitido |
+| --------- | --------- | --------- |
+| planning  | active    | ✅        |
+| planning  | completed | ✅        |
+| active    | completed | ✅        |
+| completed | planning  | ❌        |
+| completed | active    | ❌        |
+| active    | planning  | ❌        |
+
+**Admin bypass:** El admin puede cambiar a cualquier estado sin restricciones.
+
+### Reglas de seguridad
+
+| #   | Regla                                                  | Protege contra                                                     |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------ |
+| 1   | Solo el propietario puede ver/editar/eliminar su viaje | Acceso no autorizado a viajes ajenos                               |
+| 2   | Transiciones de status restringidas por estado         | Estados inconsistentes (ej. completed → planning)                  |
+| 3   | Campos editables restringidos por estado               | Modificar datos que no deben cambiar en viajes activos/completados |
+| 4   | Admin bypass total                                     | —                                                                  |
+| 5   | endDate debe ser posterior a startDate                 | Viajes con fechas inválidas                                        |
+
+### Escenarios cubiertos
+
+- **Usuario edita su propio viaje en planning**: ✅ Todos los campos permitidos
+- **Usuario edita destino en viaje activo**: ❌ Bloqueado (campo restringido)
+- **Admin edita cualquier campo en viaje completado**: ✅ Permitido
+- **Admin cambia status de completed a planning**: ✅ Permitido (bypass)
+- **Usuario intenta cambiar completed a planning**: ❌ Transición inválida
+- ** Usuario edita viaje ajeno**: ❌ Bloqueado (no es propietario)
+- **Admin edita viaje ajeno**: ✅ Permitido
 
 ---
 
@@ -312,21 +417,37 @@ NODE_ENV="development"
 ```bash
 pnpm add @nestjs/common @nestjs/core @nestjs/platform-express
 pnpm add @nestjs/config @nestjs/passport @nestjs/jwt
-pnpm add passport passport-local passport-jwt passport-google-oauth20
-pnpm add bcryptjs cookie-parser
-pnpm add @google/genai
+pnpm add passport passport-local passport-jwt
+pnpm add bcryptjs
 pnpm add class-validator class-transformer
 pnpm add @nestjs/throttler
+pnpm add @nestjs/swagger
 pnpm add reflect-metadata rxjs
+```
+
+### Producción (planeadas, aún no instaladas)
+
+```bash
+pnpm add passport-google-oauth20   # Google OAuth (fase 2)
+pnpm add cookie-parser              # Cookies (fase 2)
+pnpm add @google/genai              # Gemini SDK (fase 2)
 ```
 
 ### Desarrollo
 
 ```bash
-pnpm add -D prisma @prisma/client @prisma/adapter-pg pg
-pnpm add -D @types/passport-local @types/passport-jwt @types/passport-google-oauth20
-pnpm add -D @types/cookie-parser @types/bcryptjs
+pnpm add -D prisma @types/pg
+pnpm add -D @types/passport-local @types/passport-jwt
 ```
+
+### Producción (Prisma 7 - driver adapter requerido)
+
+```bash
+pnpm add @prisma/client @prisma/adapter-pg pg bcryptjs
+```
+
+> **Nota Prisma 7**: La conexión a PostgreSQL requiere un driver adapter (`@prisma/adapter-pg`).
+> Ver `src/infrastructure/database/prisma/prisma.service.ts` para el patrón correcto.
 
 ---
 
@@ -337,43 +458,131 @@ nomadai-api/
 ├── docs/
 │   └── ARCHITECTURE.md          # Este archivo
 ├── src/
-│   ├── main.ts
-│   ├── app.module.ts
-│   ├── config/
-│   │   └── env.validation.ts    # Validación de variables de entorno con Joi
-│   ├── prisma/
-│   │   ├── prisma.module.ts
-│   │   └── prisma.service.ts    # PrismaClient como Provider NestJS
-│   ├── auth/
-│   │   ├── auth.module.ts
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── dto/
-│   │   ├── strategies/
+│   ├── main.ts                  # Bootstrap, Swagger, ValidationPipe global
+│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users, Trips)
+│   │
+│   ├── domain/                  # NÚCLEO (sin dependencias externas)
+│   │   ├── entities/            # Interfaces de dominio puras
+│   │   │   ├── user.entity.ts
+│   │   │   ├── trip.entity.ts
+│   │   │   ├── day-plan.entity.ts
+│   │   │   ├── activity.entity.ts
+│   │   │   ├── flight-recommendation.entity.ts
+│   │   │   └── hotel-recommendation.entity.ts
+│   │   ├── enums/               # Enums de dominio
+│   │   │   ├── user-role.enum.ts
+│   │   │   ├── trip-status.enum.ts
+│   │   │   ├── activity-category.enum.ts
+│   │   │   └── travel-style.enum.ts
+│   │   ├── ports/               # Interfaces (puertos)
+│   │   │   ├── repositories/    # Puertos de salida (DRIVER)
+│   │   │   │   ├── user.repository.port.ts
+│   │   │   │   ├── trip.repository.port.ts
+│   │   │   │   └── ...
+│   │   │   └── services/        # Puertos de entrada (DRIVEN)
+│   │   │       ├── gemini.port.ts
+│   │   │       └── ...
+│   │   ├── value-objects/       # Objetos de valor (si aplica)
+│   │   └── exceptions/          # Excepciones de dominio
+│   │       └── trip-not-found.exception.ts
+│   │
+│   ├── application/             # CASOS DE USO (depende solo de domain)
+│   │   ├── use-cases/           # Un archivo por caso de uso
+│   │   │   ├── auth/
+│   │   │   │   ├── register.use-case.ts
+│   │   │   │   └── login.use-case.ts
+│   │   │   ├── users/
+│   │   │   │   ├── list-users.use-case.ts
+│   │   │   │   └── update-user.use-case.ts
+│   │   │   ├── trips/
+│   │   │   │   ├── create-trip.use-case.ts
+│   │   │   │   ├── get-trip.use-case.ts
+│   │   │   │   ├── list-trips.use-case.ts
+│   │   │   │   ├── list-all-trips.use-case.ts
+│   │   │   │   ├── update-trip.use-case.ts
+│   │   │   │   └── delete-trip.use-case.ts
+│   │   │   ├── day-plans/       # (pendiente - paso 7)
+│   │   │   └── recommendations/ # (pendiente - paso 8-9)
+│   │   └── dto/                 # DTOs de entrada/salida
+│   │       ├── register.dto.ts
+│   │       ├── login.dto.ts
+│   │       ├── update-user.dto.ts
+│   │       ├── create-trip.dto.ts
+│   │       ├── update-trip.dto.ts
+│   │       └── ...
+│   │
+│   ├── infrastructure/          # ADAPTADORES (implementa puertos)
+│   │   ├── database/
+│   │   │   ├── prisma/
+│   │   │   │   ├── prisma.module.ts      # Global PrismaModule
+│   │   │   │   ├── prisma.service.ts     # PrismaService con PrismaPg adapter
+│   │   │   │   └── mappers/              # Mappers Domain <-> Prisma
+│   │   │   │       ├── user.mapper.ts
+│   │   │   │       └── trip.mapper.ts
+│   │   │   └── repositories/
+│   │   │       ├── prisma-user.repository.ts
+│   │   │       ├── prisma-trip.repository.ts
+│   │   │       └── ...
+│   │   ├── auth/
+│   │   │   ├── auth.module.ts
+│   │   │   └── strategies/
+│   │   │       ├── local.strategy.ts
+│   │   │       └── jwt.strategy.ts
+│   │   ├── users/
+│   │   │   └── users.module.ts
+│   │   ├── trips/
+│   │   │   └── trips.module.ts
+│   │   └── ai/                  # (pendiente - paso 8)
+│   │       ├── gemini.module.ts
+│   │       ├── gemini.service.ts
+│   │       └── schemas/
+│   │
+│   ├── presentation/            # ADAPTADOR DE ENTRADA (HTTP)
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── users.controller.ts
+│   │   │   ├── trips.controller.ts
+│   │   │   └── recommendations.controller.ts  # (pendiente - paso 9)
 │   │   ├── guards/
-│   │   └── decorators/
-│   ├── users/
-│   │   ├── users.module.ts
-│   │   ├── users.service.ts
-│   │   └── users.controller.ts
-│   ├── trips/
-│   │   ├── trips.module.ts
-│   │   ├── trips.controller.ts
-│   │   ├── trips.service.ts
-│   │   └── dto/
-│   └── gemini/
-│       ├── gemini.module.ts
-│       ├── gemini.service.ts
-│       ├── dto/
-│       ├── schemas/
-│       └── gemini-exception.filter.ts
-├── test/
-│   ├── app.e2e-spec.ts
-│   └── jest-e2e.json
+│   │   │   └── roles.guard.ts
+│   │   ├── decorators/
+│   │   │   └── roles.decorator.ts
+│   │   ├── interceptors/        # (pendiente)
+│   │   └── filters/             # (pendiente)
+│   │
+│   └── shared/                  # UTILIDADES COMPARTIDAS
+│       ├── config/
+│       │   └── env.validation.ts
+│       ├── decorators/          # Decoradores compartidos
+│       │   └── current-user.decorator.ts
+│       ├── guards/              # Guards compartidos
+│       │   └── jwt-auth.guard.ts
+│       └── types/               # Tipos compartidos
+│           ├── user-payload.ts
+│           └── paginated-response.ts
+│
 ├── prisma/
-│   └── schema.prisma
-├── .env
-├── .env.example
+│   ├── schema.prisma            # 6 modelos + UserRole + TripStatus enums
+│   ├── seed.ts                  # Seed script (admin user)
+│   └── migrations/              # Migraciones generadas
+│
+├── test/
+│   ├── app.e2e-spec.ts          # Tests E2E de auth
+│   ├── setup.ts                 # Config global de tests
+│   ├── mocks/                   # Mock factories
+│   │   ├── user.factory.ts
+│   │   ├── user-repository.mock.ts
+│   │   ├── jwt-service.mock.ts
+│   │   ├── reflector.mock.ts
+│   │   ├── trip.factory.ts
+│   │   └── trip-repository.mock.ts
+│   └── jest-e2e.json
+│
+├── .env                         # Variables de entorno (gitignored)
+├── .env.example                 # Template de .env
+├── docker-compose.yml           # PostgreSQL + NestJS app
+├── Dockerfile                   # Build de producción
+├── Dockerfile.dev               # Desarrollo con hot-reload
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.build.json
@@ -383,22 +592,95 @@ nomadai-api/
 └── pnpm-workspace.yaml
 ```
 
+### Reglas de dependencias (IMPORTANTE)
+
+```
+domain/          → NO depende de NADA (ni de Prisma, ni de NestJS, ni de nada externo)
+application/     → Depende SOLO de domain/
+infrastructure/  → Depende de domain/ y application/
+presentation/    → Depende de application/ y shared/ (NUNCA directamente de infrastructure/)
+shared/          → Depende solo de domain/ (tipos, decorators, guards)
+```
+
+Las flechas de dependencia van **siempre hacia adentro**. Nunca hacia afuera.
+
+### Ejemplo: Flujo de un caso de uso
+
+```
+HTTP Request
+  ↓
+Controller (presentation/)          ← Valida con DTO (schema inline Swagger)
+  ↓
+Use Case (application/)             ← Lógica de negocio pura + validación manual
+  ↓
+Repository Port (domain/ports/)     ← Interfaz abstracta (abstract class)
+  ↓
+Repository Impl (infrastructure/)   ← Implementación con Prisma
+  ↓
+Database
+```
+
 ---
 
 ## Plan de Implementación (Orden)
 
-| Paso | Descripción | Archivos aprox. |
-|------|-------------|-----------------|
-| 1 | **Documentación** — Crear docs/ARCHITECTURE.md | 1 |
-| 2 | **Prisma + DB** — Schema, PrismaService, migración inicial | 3 |
-| 3 | **Config** — Variables de entorno validadas con Joi | 2 |
-| 4 | **Users** — CRUD básico | 3 |
-| 5 | **Auth** — Register/Login + Google OAuth + JWT | ~10 |
-| 6 | **Trips** — CRUD de viajes | 4 |
-| 7 | **Day Plans + Activities** — Planificación día a día con lat/lng | 5 |
-| 8 | **Gemini Module** — Integración con Google Gemini | 5 |
-| 9 | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario) | 4 |
-| 10 | **Hardening** — Rate limiting, validación de env, filtros de excepción | 2 |
+| Paso | Descripción                                                                     | Estado       |
+| ---- | ------------------------------------------------------------------------------- | ------------ |
+| 1    | **Documentación** — Crear docs/ARCHITECTURE.md + AGENTS.md                      | ✅ Hecho     |
+| 2    | **Prisma + DB** — Schema, PrismaService, migración inicial                      | ✅ Hecho     |
+| 2b   | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin                    | ✅ Hecho     |
+| 3    | **Config** — Variables de entorno validadas con Joi                             | ✅ Hecho     |
+| 4    | **Users** — CRUD básico                                                         | ✅ Hecho     |
+| 5    | **Auth** — Register/Login + JWT                                                 | ✅ Hecho     |
+| 5b   | **Swagger** — Documentación API con @nestjs/swagger                             | ✅ Hecho     |
+| 6    | **Trips** — CRUD de viajes + admin management                                   | ✅ Hecho     |
+| 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ⬜ Pendiente |
+| 8    | **Gemini Module** — Integración con Google Gemini                               | ⬜ Pendiente |
+| 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ⬜ Pendiente |
+| 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho     |
+
+### Estado actual (Hardening completado)
+
+**Módulos funcionando:**
+
+- `POST /auth/register` — Registro con validación manual (email, password)
+- `POST /auth/login` — Login con JWT (accessToken en body)
+- `GET /auth/profile` — Perfil del usuario autenticado
+- `GET /users` — Listar usuarios (solo ADMIN, paginado)
+- `PATCH /users/:id` — Actualizar perfil (propio o admin, con reglas de negocio)
+- `POST /trips` — Crear viaje
+- `GET /trips` — Listar viajes del usuario (paginado)
+- `GET /trips/admin/all` — Listar todos los viajes (solo ADMIN, paginado)
+- `GET /trips/:id` — Detalle de viaje (solo propietario o admin)
+- `PATCH /trips/:id` — Actualizar viaje (solo propietario o admin, admin bypass total)
+- `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario o admin)
+
+**Hardening completado:**
+
+- ✅ Rate limiting global (ThrottlerGuard: 100 requests/60s)
+- ✅ JWT secret sin fallback (requerido en .env, validado por Joi)
+- ✅ JwtModule.registerAsync con ConfigService
+- ✅ JwtAuthGuard y CurrentUser en shared/ (arquitectura hexagonal correcta)
+- ✅ UserMapper y TripMapper (eliminados `as any` en repositorios)
+- ✅ Validación manual en use cases (page, limit, email, password, etc.)
+- ✅ Enums de dominio en todas las capas (TripStatus, TravelStyle, UserRole)
+- ✅ Paginación estándar en todos los endpoints de listado
+- ✅ SafeUser como tipo de retorno (sin passwordHash)
+
+**Swagger UI:** `http://localhost:3000/api`
+
+**Acceso a DB:** `docker exec -it nomadai-postgres psql -U postgres -d nomadai`
+
+### Próximo paso: Day Plans + Activities (Paso 7)
+
+Crear en este orden:
+
+1. `src/application/dto/create-day-plan.dto.ts` — DTO de entrada
+2. `src/application/dto/create-activity.dto.ts` — DTO de actividad
+3. `src/application/use-cases/day-plans/*.use-case.ts` — Casos de uso
+4. `src/infrastructure/database/repositories/prisma-day-plan.repository.ts` — Repository
+5. `src/presentation/controllers/day-plans.controller.ts` — Controller
+6. Registrar módulo en `app.module.ts`
 
 ---
 
@@ -406,21 +688,21 @@ nomadai-api/
 
 ### Archivos Docker
 
-| Archivo | Propósito |
-|---------|-----------|
-| `Dockerfile` | Build multi-stage para producción (deps → build → runner) |
-| `Dockerfile.dev` | Imagen de desarrollo con hot-reload |
-| `docker-compose.yml` | Composición: app + PostgreSQL |
-| `.dockerignore` | Excluir archivos del contexto Docker |
-| `.env.example` | Template de variables de entorno (se sube a git) |
-| `.env.docker` | Variables para Docker (gitignored) |
+| Archivo              | Propósito                                                 |
+| -------------------- | --------------------------------------------------------- |
+| `Dockerfile`         | Build multi-stage para producción (deps → build → runner) |
+| `Dockerfile.dev`     | Imagen de desarrollo con hot-reload                       |
+| `docker-compose.yml` | Composición: app + PostgreSQL                             |
+| `.dockerignore`      | Excluir archivos del contexto Docker                      |
+| `.env.example`       | Template de variables de entorno (se sube a git)          |
+| `.env.docker`        | Variables para Docker (gitignored)                        |
 
 ### Servicios
 
-| Servicio | Imagen | Puerto | Descripción |
-|----------|--------|--------|-------------|
-| **postgres** | `postgres:16-alpine` | 5432 | Base de datos con volumen persistente |
-| **app** | `node:22-alpine` (custom) | 3000, 9229 | NestJS con hot-reload |
+| Servicio     | Imagen                    | Puerto     | Descripción                           |
+| ------------ | ------------------------- | ---------- | ------------------------------------- |
+| **postgres** | `postgres:16-alpine`      | 5432       | Base de datos con volumen persistente |
+| **app**      | `node:22-alpine` (custom) | 3000, 9229 | NestJS con hot-reload                 |
 
 ### Comandos
 
@@ -454,7 +736,21 @@ docker exec -it nomadai-app pnpm prisma studio
 
 # Crear migración
 docker exec -it nomadai-app pnpm prisma migrate dev --name nombre_migracion
+
+# Seed (crear usuario admin)
+pnpm db:seed
+
+# Reset completo (DB + seed)
+pnpm db:reset
 ```
+
+### Credenciales por defecto (Seed)
+
+| Campo    | Valor               |
+| -------- | ------------------- |
+| Email    | `admin@nomadai.com` |
+| Password | `admin123`          |
+| Rol      | `ADMIN`             |
 
 ### Variables de Entorno para Docker
 
@@ -471,24 +767,24 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nomadai?schema=publi
 
 ### Gotchas Evitados
 
-| Problema | Solución |
-|----------|----------|
-| `node_modules` del host sobreescribe los del container | Volumen anónimo: `- /app/node_modules` |
-| Prisma no encuentra `musl` en Alpine | No instalar `libc6-compat` |
-| Builds no reproducibles | Usar `--frozen-lockfile` |
-| App arranca antes que la DB | `depends_on` con `condition: service_healthy` |
-| Container corre como root | Non-root user en Dockerfile de producción |
-| Secrets en el historial de git | `.env` en `.gitignore`, solo `.env.example` se sube |
+| Problema                                               | Solución                                            |
+| ------------------------------------------------------ | --------------------------------------------------- |
+| `node_modules` del host sobreescribe los del container | Volumen anónimo: `- /app/node_modules`              |
+| Prisma no encuentra `musl` en Alpine                   | No instalar `libc6-compat`                          |
+| Builds no reproducibles                                | Usar `--frozen-lockfile`                            |
+| App arranca antes que la DB                            | `depends_on` con `condition: service_healthy`       |
+| Container corre como root                              | Non-root user en Dockerfile de producción           |
+| Secrets en el historial de git                         | `.env` en `.gitignore`, solo `.env.example` se sube |
 
 ---
 
 ## Fases Futuras
 
-| Fase | Funcionalidad |
-|------|---------------|
-| **Fase 2** | Leaflet/OpenStreetMap integrado, Streaming SSE, Chat flotante con IA |
+| Fase       | Funcionalidad                                                                 |
+| ---------- | ----------------------------------------------------------------------------- |
+| **Fase 2** | Leaflet/OpenStreetMap integrado, Streaming SSE, Chat flotante con IA          |
 | **Fase 3** | Duffel API para precios reales de vuelos/hoteles, Favoritos, Compartir viajes |
-| **Fase 4** | Frontend Vue completo, Notificaciones, Modo offline |
+| **Fase 4** | Frontend Vue completo, Notificaciones, Modo offline                           |
 
 ---
 

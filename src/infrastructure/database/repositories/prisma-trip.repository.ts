@@ -1,0 +1,85 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import {
+  CreateTripData,
+  UpdateTripData,
+  TripRepositoryPort,
+} from '../../../domain/ports/repositories/trip.repository.port';
+import { Trip } from '../../../domain/entities/trip.entity';
+import { TripMapper } from '../prisma/mappers/trip.mapper';
+
+@Injectable()
+export class PrismaTripRepository extends TripRepositoryPort {
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
+    super();
+  }
+
+  async findById(id: string): Promise<Trip | null> {
+    const trip = await this.prisma.instance.trip.findUnique({ where: { id } });
+    return trip ? TripMapper.toDomain(trip) : null;
+  }
+
+  async findByUserId(
+    userId: string,
+    offset: number,
+    limit: number,
+  ): Promise<Trip[]> {
+    const trips = await this.prisma.instance.trip.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
+    return trips.map((t) => TripMapper.toDomain(t));
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.prisma.instance.trip.count({ where: { userId } });
+  }
+
+  async findAll(offset: number, limit: number): Promise<Trip[]> {
+    const trips = await this.prisma.instance.trip.findMany({
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+    });
+    return trips.map((t) => TripMapper.toDomain(t));
+  }
+
+  async count(): Promise<number> {
+    return this.prisma.instance.trip.count();
+  }
+
+  async create(data: CreateTripData): Promise<Trip> {
+    const prismaData = TripMapper.toPrismaCreate({
+      userId: data.userId,
+      title: data.title,
+      destination: data.destination,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      budget: data.budget,
+      travelerCount: data.travelerCount ?? 1,
+      preferences: {
+        interests: data.preferences.interests,
+        travelStyle: data.preferences.travelStyle,
+      },
+    });
+    const trip = await this.prisma.instance.trip.create({ data: prismaData });
+    return TripMapper.toDomain(trip);
+  }
+
+  async update(id: string, data: UpdateTripData): Promise<Trip> {
+    const prismaData = TripMapper.toPrismaUpdate(
+      data as Record<string, unknown>,
+    );
+    const trip = await this.prisma.instance.trip.update({
+      where: { id },
+      data: prismaData,
+    });
+    return TripMapper.toDomain(trip);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.prisma.instance.trip.delete({ where: { id } });
+  }
+}

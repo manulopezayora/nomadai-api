@@ -7,6 +7,20 @@ Consultar `docs/ARCHITECTURE.md` para detalles completos del stack, modelo de da
 
 ---
 
+## Regla Fundamental: Preguntar ANTES de Actuar
+
+**SIEMPRE** preguntar al usuario antes de implementar cambios, crear archivos,
+o tomar cualquier acción que modifique el código. No asumir nunca qué quiere el usuario.
+
+- Si el usuario dice "arregla los tests", SOLO arreglar tests
+- Si el usuario pregunta "qué sigue?", primero proponer el plan y esperar confirmación
+- Si hay ambigüedad, preguntar para clarificar antes de actuar
+- Nunca crear archivos no solicitados
+- Nunca implementar funcionalidad no explícitamente pedida
+- **NUNCA hacer commits.** Solo el usuario hace commits. El agente solo escribe código, corre tests y lint. El usuario revisa cada archivo antes de commitear.
+
+---
+
 ## Arquitectura Hexagonal (Puertos y Adaptadores)
 
 El proyecto sigue **arquitectura hexagonal** (Ports & Adapters). La lógica de negocio
@@ -25,6 +39,7 @@ src/
 │   │   ├── flight-recommendation.entity.ts
 │   │   └── hotel-recommendation.entity.ts
 │   ├── enums/                       # Enums de dominio
+│   │   ├── user-role.enum.ts
 │   │   ├── trip-status.enum.ts
 │   │   ├── activity-category.enum.ts
 │   │   └── travel-style.enum.ts
@@ -97,8 +112,12 @@ src/
 ├── shared/                          # UTILIDADES COMPARTIDAS
 │   ├── config/
 │   │   └── env.validation.ts
+│   ├── decorators/                  # Decoradores compartidos
+│   │   └── current-user.decorator.ts
+│   ├── guards/                      # Guards compartidos
+│   │   └── jwt-auth.guard.ts
 │   └── types/                       # Tipos compartidos
-│       └── request-with-user.ts
+│       └── user-payload.ts
 │
 └── main.ts
 ```
@@ -109,7 +128,8 @@ src/
 domain/          → NO depende de NADA (ni de Prisma, ni de NestJS, ni de nada externo)
 application/     → Depende SOLO de domain/
 infrastructure/  → Depende de domain/ y application/
-presentation/    → Depende de application/ (NUNCA directamente de infrastructure/)
+presentation/    → Depende de application/ y shared/ (NUNCA directamente de infrastructure/)
+shared/          → Depende solo de domain/ (tipos, decorators, guards)
 ```
 
 Las flechas de dependencia van **siempre hacia adentro**. Nunca hacia afuera.
@@ -135,22 +155,27 @@ Database
 ## Clean Code y Principios SOLID
 
 ### S — Single Responsibility
+
 - Cada clase/archivo tiene **una única razón para cambiar**
 - Un controller solo orquesta, un use case solo tiene una lógica
 - Un repository solo accede a datos
 
 ### O — Open/Closed
+
 - Entidades y puertos son **abiertos a extensión, cerrados a modificación**
 - Para añadir un nuevo adaptador de IA, se crea una nueva implementación del puerto
 
 ### L — Liskov Substitution
+
 - Todas las implementaciones de un puerto deben ser intercambiables
 
 ### I — Interface Segregation
+
 - Puertos pequeños y específicos (no interfaces gigantes)
 - `UserRepositoryPort` solo tiene métodos de usuario
 
 ### D — Dependency Inversion
+
 - Los módulos de alto nivel no dependen de bajo nivel
 - Ambos dependen de **abstracciones** (puertos/interfaces)
 
@@ -160,7 +185,7 @@ Database
 - **No lógica de negocio en controllers ni services de infraestructura**
 - **Una función = un archivo** para casos de uso (cuando son simples)
 - **Functional pipes** en lugar de clases cuando sea posible
-- **DTOs con class-validator** para validación declarativa
+- **DTOs con class-validator** para validación declarativa (ver nota tsx abajo)
 - **No usar `any`** — usar tipos específicos siempre
 - **Nombres descriptivos**: `createTripUseCase`, no `create` o `svc`
 - **Archivos kebab-case**: `create-trip.use-case.ts`, no `createTripUseCase.ts`
@@ -236,7 +261,7 @@ export interface TripRepositoryPort {
 // application/use-cases/trips/create-trip.use-case.ts
 export class CreateTripUseCase {
   constructor(
-    private readonly tripRepository: TripRepositoryPort,  // Puerto inyectado
+    private readonly tripRepository: TripRepositoryPort, // Puerto inyectado
   ) {}
 
   async execute(dto: CreateTripDto, userId: string): Promise<Trip> {
@@ -287,6 +312,8 @@ export class TripMapper {
 
 ```typescript
 // presentation/controllers/trips.controller.ts
+@ApiTags('Trips')
+@ApiBearerAuth()
 @Controller('trips')
 @UseGuards(JwtAuthGuard)
 export class TripsController {
@@ -296,6 +323,19 @@ export class TripsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new trip' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'destination'],
+      properties: {
+        title: { type: 'string', example: 'Trip to Japan' },
+        destination: { type: 'string', example: 'Tokyo' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Trip created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@CurrentUser() user: UserPayload, @Body() dto: CreateTripDto) {
     return this.createTripUseCase.execute(dto, user.userId);
   }
@@ -317,6 +357,150 @@ export class TripsController {
 })
 export class TripsModule {}
 ```
+
+### 7. Documentación Swagger (OBLIGATORIO para cada módulo)
+
+**Cada controller y DTO nuevo DEBE incluir decoradores de Swagger.**
+
+```typescript
+// En el controller:
+@ApiTags('Trips')                    // Agrupa endpoints en Swagger UI
+@ApiBearerAuth()                     // Indica que requiere JWT
+@ApiOperation({ summary: '...' })    // Descripción del endpoint
+@ApiResponse({ status: 200, ... })   // Cada respuesta posible
+@ApiParam({ name: 'id', ... })       // Parámetros de ruta
+
+// En los DTOs:
+@ApiProperty({ example: '...' })             // Propiedades requeridas
+@ApiPropertyOptional({ example: '...' })     // Propiedades opcionales
+```
+
+**⚠️ IMPORTANTE: `@ApiBody` con tsx/esbuild**
+
+El proyecto usa `tsx` (basado en esbuild) que **NO emite `emitDecoratorMetadata`**.
+Por eso `@ApiBody({ type: RegisterDto })` causa un error de dependencia circular:
+
+```
+[RegisterDto] A circular dependency has been detected (property key: "email")
+```
+
+**Solución: Usar schemas inline en `@ApiBody`** en lugar de referenciar clases DTO:
+
+```typescript
+// ❌ INCORRECTO - causa circular dependency con tsx
+@ApiBody({ type: RegisterDto })
+
+// ✅ CORRECTO - schema inline, funciona con tsx
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email', example: 'user@example.com' },
+      password: { type: 'string', minLength: 8, example: 'password123' },
+      firstName: { type: 'string', example: 'John' },
+    },
+  },
+})
+```
+
+**Checklist de documentación por módulo:**
+
+- [ ] `@ApiTags('NombreDelModulo')` en el controller
+- [ ] `@ApiBearerAuth()` en controllers protegidos
+- [ ] `@ApiOperation` en cada endpoint
+- [ ] `@ApiResponse` para cada código de estado (200, 201, 400, 401, 403, 404)
+- [ ] `@ApiParam` para parámetros de ruta
+- [ ] `@ApiBody({ schema: {...} })` con **schema inline** (NO `type: DtoClass`) para endpoints con body
+- [ ] `@ApiProperty` / `@ApiPropertyOptional` en todos los campos del DTO
+- [ ] `examples` en properties para documentación clara
+
+---
+
+## Limitaciones de tsx/esbuild (CRÍTICO)
+
+El proyecto usa **tsx** (basado en esbuild) para hot-reload en Docker. Esto tiene
+implicaciones importantes que debes conocer:
+
+### 1. `@Inject()` EXPLícito en TODOS los constructores
+
+tsx **NO emite `emitDecoratorMetadata`**, así que NestJS no puede resolver
+parámetros del constructor automáticamente. **SIEMPRE usar `@Inject()`**:
+
+```typescript
+// ❌ INCORRECTO - falla silenciosamente (use case = undefined)
+constructor(
+  private readonly userRepository: UserRepositoryPort,
+) {}
+
+// ✅ CORRECTO - funciona con tsx
+constructor(
+  @Inject(UserRepositoryPort)
+  private readonly userRepository: UserRepositoryPort,
+) {}
+```
+
+Esto aplica a:
+
+- **Controllers**: `@Inject(UseCase)` en cada caso de uso
+- **Use Cases**: `@Inject(Port)` en cada puerto/repositorio
+- **Guards**: `@Inject(Reflector)` si usan Reflector
+- **Repositories**: `@Inject(PrismaService)` si usan Prisma
+- **Strategies**: `@Inject(Service)` si usan servicios
+
+**Incluso si la clase es un token directo** (no abstracto), usar `@Inject()`.
+
+### 2. `class-validator` NO funciona automáticamente
+
+Los decoradores de validación (`@IsEmail`, `@MinLength`, etc.) **no se ejecutan**
+porque esbuild no preserva metadata de decoradores. El `ValidationPipe` global
+funciona pero **NO valida restricciones de DTOs**.
+
+**Solución: Agregar validación manual en el use case**:
+
+```typescript
+async execute(dto: RegisterDto): Promise<User> {
+  if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
+    throw new BadRequestException('Invalid email format');
+  }
+  if (!dto.password || dto.password.length < 8) {
+    throw new BadRequestException('Password must be at least 8 characters');
+  }
+  // ... resto de la lógica
+}
+```
+
+Los DTOs conservan los decoradores de `class-validator` y `@ApiProperty` de
+Swagger para documentación, pero **la validación real va en el use case**.
+
+### 3. `@ApiBody({ type: DtoClass })` causa circular dependency
+
+Usar **schemas inline** en lugar de referenciar clases DTO:
+
+```typescript
+// ❌ INCORRECTO - error circular con tsx
+@ApiBody({ type: RegisterDto })
+
+// ✅ CORRECTO - schema inline
+@ApiBody({
+  schema: {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email: { type: 'string', format: 'email', example: 'user@example.com' },
+      password: { type: 'string', minLength: 8, example: 'password123' },
+    },
+  },
+})
+```
+
+### Resumen de reglas para nuevos módulos
+
+1. **Siempre** `@Inject()` en constructores (todos los parámetros)
+2. **Siempre** validación manual en use cases (no depender de class-validator)
+3. **Siempre** `@ApiBody({ schema: {...} })` inline (no `type: DtoClass`)
+4. **Nunca** usar `@Body(new ValidationPipe(...))` en controllers (el global ya existe)
+5. Los DTOs sirven para **documentación Swagger** y **tipado TS**, no para validación
 
 ---
 
@@ -341,21 +525,46 @@ Si alguno falla, **corregir antes de continuar**.
 
 ## Naming Conventions
 
-| Tipo | Convención | Ejemplo |
-|------|-----------|---------|
-| Archivos de caso de uso | `*.use-case.ts` | `create-trip.use-case.ts` |
-| Archivos de controller | `*.controller.ts` | `trips.controller.ts` |
-| Archivos de servicio | `*.service.ts` | `gemini.service.ts` |
-| Archivos de repository | `*.repository.ts` | `prisma-trip.repository.ts` |
-| Archivos de DTO | `*.dto.ts` | `create-trip.dto.ts` |
-| Archivos de mapper | `*.mapper.ts` | `trip.mapper.ts` |
-| Archivos de strategy | `*.strategy.ts` | `jwt.strategy.ts` |
-| Archivos de guard | `*.guard.ts` | `jwt-auth.guard.ts` |
-| Archivos de interfaz | `*.port.ts` (puerto) | `trip.repository.port.ts` |
-| Enums | `*.enum.ts` | `trip-status.enum.ts` |
-| Clases | PascalCase | `CreateTripUseCase` |
-| Variables/funciones | camelCase | `createTripUseCase` |
-| Constantes | UPPER_SNAKE_CASE | `MAX_TRIPS_PER_USER` |
+| Tipo                    | Convención           | Ejemplo                     |
+| ----------------------- | -------------------- | --------------------------- |
+| Archivos de caso de uso | `*.use-case.ts`      | `create-trip.use-case.ts`   |
+| Archivos de controller  | `*.controller.ts`    | `trips.controller.ts`       |
+| Archivos de servicio    | `*.service.ts`       | `gemini.service.ts`         |
+| Archivos de repository  | `*.repository.ts`    | `prisma-trip.repository.ts` |
+| Archivos de DTO         | `*.dto.ts`           | `create-trip.dto.ts`        |
+| Archivos de mapper      | `*.mapper.ts`        | `trip.mapper.ts`            |
+| Archivos de strategy    | `*.strategy.ts`      | `jwt.strategy.ts`           |
+| Archivos de guard       | `*.guard.ts`         | `jwt-auth.guard.ts`         |
+| Archivos de interfaz    | `*.port.ts` (puerto) | `trip.repository.port.ts`   |
+| Enums                   | `*.enum.ts`          | `trip-status.enum.ts`       |
+| Clases                  | PascalCase           | `CreateTripUseCase`         |
+| Variables/funciones     | camelCase            | `createTripUseCase`         |
+| Constantes              | UPPER_SNAKE_CASE     | `MAX_TRIPS_PER_USER`        |
+
+---
+
+## Uso de Enums
+
+**Siempre** usar enums de dominio en vez de string literals en todo el proyecto:
+
+- **Entidades**: Los campos con valores predefinidos deben tiparse con el enum, no con union types de strings
+- **DTOs**: Usar `enum: EnumType` en `@ApiProperty` y `@IsIn(Object.values(EnumType))` en validación
+- **Use Cases**: Usar los valores del enum (`Enum.VALUE`) en vez de strings (`'value'`)
+- **Repositorios**: Los puertos deben tipar los campos con el enum, no con `string`
+- **Prisma Schema**: Usar el tipo enum de Prisma en vez de `String` para campos con valores fijos
+- **Tests y Mocks**: Usar los valores del enum en vez de strings
+
+```typescript
+// ❌ INCORRECTO - string literal
+status: 'planning';
+travelStyle: 'mid';
+
+// ✅ CORRECTO - enum
+status: TripStatus.PLANNING;
+travelStyle: TravelStyle.MID;
+```
+
+Si un campo tiene valores predefinidos, **crear un enum** en `domain/enums/` y reutilizarlo en todas las capas.
 
 ---
 
@@ -375,7 +584,7 @@ import { TripStatus } from '../../domain/enums/trip-status.enum';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 
 // 4. Shared
-import { UserPayload } from '../../shared/types/request-with-user';
+import { UserPayload } from '../../shared/types/user-payload';
 ```
 
 ---
@@ -388,6 +597,7 @@ import { UserPayload } from '../../shared/types/request-with-user';
 - Validar TODOS los inputs con DTOs y class-validator
 - Rate limiting en endpoints de auth
 - Variables sensibles SOLO en `.env` (nunca hardcodeadas)
+- **Siempre** usar `SafeUser` (Omit<User, 'passwordHash'>) como tipo de retorno en use cases que retornan usuarios. Nunca retornar la entidad `User` completa con `passwordHash`. Usar la función `toSafeUser()` para stripear el campo.
 
 ---
 
@@ -416,7 +626,142 @@ import { UserPayload } from '../../shared/types/request-with-user';
                     │  (Prisma, Gemini, Auth,      │
                     │   Repositories, Mappers)    │
                     └─────────────────────────────┘
+
+                    ┌─────────────────────────────┐
+                    │         SHARED              │
+                    │  (Guards, Decorators,        │
+                    │   Config, Types)             │
+                    └─────────────────────────────┘
 ```
 
 **Regla de oro:** Las dependencias siempre apuntan hacia adentro (→ Domain).
 Nunca hacia afuera.
+
+---
+
+## Testing
+
+### Convenciones
+
+- Archivos de test: `*.spec.ts` (junto al archivo que testea)
+- Tests unitarios: mockear dependencias con `jest.Mocked<T>`
+- Tests E2E: en `test/`, usar `@nestjs/testing` + `supertest`
+- Coverage mínimo: 50% global (subir conforme crece el proyecto)
+
+### Estructura de un test unitario
+
+```typescript
+import { SomeUseCase } from './some.use-case';
+import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
+
+describe('SomeUseCase', () => {
+  let useCase: SomeUseCase;
+  let mockRepo: ReturnType<typeof createMockUserRepository>;
+
+  beforeEach(() => {
+    mockRepo = createMockUserRepository();
+    useCase = new SomeUseCase(mockRepo as unknown as UserRepositoryPort);
+  });
+
+  describe('methodName', () => {
+    it('should do something', async () => {
+      // Arrange
+      mockRepo.findById.mockResolvedValue(mockData);
+
+      // Act
+      const result = await useCase.execute(input);
+
+      // Assert
+      expect(result).toEqual(expected);
+    });
+  });
+});
+```
+
+### Mock factories disponibles
+
+| Factory                      | Ubicación                            | Uso                    |
+| ---------------------------- | ------------------------------------ | ---------------------- |
+| `createMockUser()`           | `test/mocks/user.factory.ts`         | Usuario de prueba      |
+| `createMockAdmin()`          | `test/mocks/user.factory.ts`         | Admin de prueba        |
+| `createMockUserRepository()` | `test/mocks/user-repository.mock.ts` | Mock completo del repo |
+| `createMockJwtService()`     | `test/mocks/jwt-service.mock.ts`     | Mock de JwtService     |
+| `createMockTrip()`           | `test/mocks/trip.factory.ts`         | Viaje de prueba        |
+| `createMockTripRepository()` | `test/mocks/trip-repository.mock.ts` | Mock completo del repo |
+
+### Comandos de test
+
+```bash
+pnpm test          # Ejecutar todos los tests
+pnpm test:watch    # Modo watch (desarrollo)
+pnpm test:cov      # Con coverage
+pnpm test:ci       # Para CI (coverage + forceExit)
+pnpm test:e2e      # Tests E2E (requiere DB)
+```
+
+---
+
+## Conventional Commits
+
+El proyecto usa **conventional commits** validados por `commitlint`.
+
+### Formato
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types permitidos
+
+| Type       | Uso                            | Ejemplo                                    |
+| ---------- | ------------------------------ | ------------------------------------------ |
+| `feat`     | Nueva funcionalidad            | `feat(trips): add CRUD endpoints`          |
+| `fix`      | Bug fix                        | `fix(auth): handle expired JWT`            |
+| `docs`     | Documentación                  | `docs(arch): update directory structure`   |
+| `style`    | Formato (sin cambio de lógica) | `style: apply prettier`                    |
+| `refactor` | Refactorización                | `refactor(auth): extract validation logic` |
+| `test`     | Tests                          | `test(auth): add register unit tests`      |
+| `chore`    | Config, dependencias           | `chore(deps): add husky`                   |
+| `ci`       | CI/CD                          | `ci: add GitHub Actions workflow`          |
+| `perf`     | Rendimiento                    | `perf(db): add missing index`              |
+| `revert`   | Revertir commit                | `revert: revert "feat(trips)..."`          |
+
+### Scopes permitidos
+
+`auth`, `users`, `trips`, `day-plans`, `activities`, `gemini`, `recommendations`, `db`, `deps`, `config`, `arch`, `testing`, `docker`
+
+### Hooks automáticos
+
+- **pre-commit**: `lint-staged` ejecuta ESLint + Prettier en archivos staged
+- **commit-msg**: `commitlint` valida el formato del mensaje
+
+---
+
+## Git Hooks (Husky)
+
+### Pre-commit
+
+Ejecuta `lint-staged` que aplica:
+
+- `*.ts` → ESLint --fix + Prettier --write
+- `*.{json,md,yml}` → Prettier --write
+
+### Commit-msg
+
+Valida el mensaje con `commitlint`. Ejemplo de commit válido:
+
+```bash
+git commit -m "feat(trips): add trip creation endpoint"
+```
+
+### Commits inválidos (serán rechazados)
+
+```bash
+git commit -m "added new feature"     # ❌ Sin type
+git commit -m "feat: add trips"       # ❌ Sin scope
+git commit -m "feat(invalid): test"   # ❌ Scope no permitido
+```
