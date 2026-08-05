@@ -256,13 +256,14 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ### Trips
 
-| Método | Ruta         | Descripción                             | Auth |
-| ------ | ------------ | --------------------------------------- | ---- |
-| POST   | `/trips`     | Crear viaje                             | Sí   |
-| GET    | `/trips`     | Listar viajes del usuario               | Sí   |
-| GET    | `/trips/:id` | Detalle de viaje con días y actividades | Sí   |
-| PATCH  | `/trips/:id` | Actualizar viaje                        | Sí   |
-| DELETE | `/trips/:id` | Eliminar viaje (cascade)                | Sí   |
+| Método | Ruta               | Descripción                             | Auth  |
+| ------ | ------------------ | --------------------------------------- | ----- |
+| POST   | `/trips`           | Crear viaje                             | Sí    |
+| GET    | `/trips`           | Listar viajes del usuario (paginado)    | Sí    |
+| GET    | `/trips/admin/all` | Listar todos los viajes (solo ADMIN)    | ADMIN |
+| GET    | `/trips/:id`       | Detalle de viaje con días y actividades | Sí    |
+| PATCH  | `/trips/:id`       | Actualizar viaje                        | Sí    |
+| DELETE | `/trips/:id`       | Eliminar viaje (cascade)                | Sí    |
 
 ### Day Plans
 
@@ -313,6 +314,58 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 - **Admin se demotiona a sí mismo**: ❌ Bloqueado (regla 1)
 - **Último admin intenta desactivar a otro admin**: ❌ Bloqueado (regla 3)
 - **Usuario normal intenta cambiar role/isActive**: ❌ Bloqueado (regla 4)
+
+---
+
+## Reglas de Negocio — Trip Management
+
+### Permisos de edición por rol
+
+| Actor     | Campos editables                                                  | Campos bloqueados |
+| --------- | ----------------------------------------------------------------- | ----------------- |
+| **USER**  | Todos (solo en viajes propios, sujeto a restricciones de status)  | —                 |
+| **ADMIN** | Todos los campos, en cualquier viaje, sin restricciones de status | —                 |
+
+### Restricciones de status (solo USER)
+
+| Status actual | Campos editables                                                                              | Campos bloqueados               |
+| ------------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
+| **planning**  | title, destination, startDate, endDate, budget, travelerCount, interests, travelStyle, status | —                               |
+| **active**    | title, budget, travelerCount, interests, travelStyle, status                                  | destination, startDate, endDate |
+| **completed** | — (solo lectura)                                                                              | Todos                           |
+
+### Transiciones de status válidas (solo USER)
+
+| De        | Hacia     | Permitido |
+| --------- | --------- | --------- |
+| planning  | active    | ✅        |
+| planning  | completed | ✅        |
+| active    | completed | ✅        |
+| completed | planning  | ❌        |
+| completed | active    | ❌        |
+| active    | planning  | ❌        |
+
+**Admin bypass:** El admin puede cambiar a cualquier estado sin restricciones.
+
+### Reglas de seguridad
+
+| #   | Regla                                                  | Protege contra                                                     |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------ |
+| 1   | Solo el propietario puede ver/editar/eliminar su viaje | Acceso no autorizado a viajes ajenos                               |
+| 2   | Transiciones de status restringidas por estado         | Estados inconsistentes (ej. completed → planning)                  |
+| 3   | Campos editables restringidos por estado               | Modificar datos que no deben cambiar en viajes activos/completados |
+| 4   | Admin bypass total                                     | —                                                                  |
+| 5   | endDate debe ser posterior a startDate                 | Viajes con fechas inválidas                                        |
+
+### Escenarios cubiertos
+
+- **Usuario edita su propio viaje en planning**: ✅ Todos los campos permitidos
+- **Usuario edita destino en viaje activo**: ❌ Bloqueado (campo restringido)
+- **Admin edita cualquier campo en viaje completado**: ✅ Permitido
+- **Admin cambia status de completed a planning**: ✅ Permitido (bypass)
+- **Usuario intenta cambiar completed a planning**: ❌ Transición inválida
+- ** Usuario edita viaje ajeno**: ❌ Bloqueado (no es propietario)
+- **Admin edita viaje ajeno**: ✅ Permitido
 
 ---
 
@@ -445,6 +498,7 @@ nomadai-api/
 │   │   │   │   ├── create-trip.use-case.ts
 │   │   │   │   ├── get-trip.use-case.ts
 │   │   │   │   ├── list-trips.use-case.ts
+│   │   │   │   ├── list-all-trips.use-case.ts
 │   │   │   │   ├── update-trip.use-case.ts
 │   │   │   │   └── delete-trip.use-case.ts
 │   │   │   ├── day-plans/       # (pendiente - paso 7)
@@ -583,7 +637,7 @@ Database
 | 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ⬜ Pendiente |
 | 10   | **Hardening** — Rate limiting ✅, filtros de excepción, global exception filter | ⬜ Pendiente |
 
-### Estado actual (Paso 6 completado)
+### Estado actual (Paso 6 + admin trips completado)
 
 **Módulos funcionando:**
 
@@ -593,10 +647,11 @@ Database
 - `GET /users` — Listar usuarios (solo ADMIN)
 - `PATCH /users/:id` — Actualizar perfil (propio o admin)
 - `POST /trips` — Crear viaje
-- `GET /trips` — Listar viajes del usuario
-- `GET /trips/:id` — Detalle de viaje (solo propietario)
-- `PATCH /trips/:id` — Actualizar viaje (solo propietario)
-- `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario)
+- `GET /trips` — Listar viajes del usuario (paginado)
+- `GET /trips/admin/all` — Listar todos los viajes (solo ADMIN, paginado)
+- `GET /trips/:id` — Detalle de viaje (solo propietario o admin)
+- `PATCH /trips/:id` — Actualizar viaje (solo propietario o admin, admin bypass total)
+- `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario o admin)
 
 **Credenciales de prueba:**
 
