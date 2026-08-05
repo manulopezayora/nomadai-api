@@ -5,6 +5,7 @@ import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.u
 import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip.use-case';
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { createMockTrip } from '../../../test/mocks/trip.factory';
+import { UserRole } from '../../domain/enums/user-role.enum';
 
 describe('TripsController', () => {
   let controller: TripsController;
@@ -14,7 +15,11 @@ describe('TripsController', () => {
   let mockUpdateTrip: jest.Mocked<UpdateTripUseCase>;
   let mockDeleteTrip: jest.Mocked<DeleteTripUseCase>;
 
-  const mockUser = { userId: 'user-123', email: 'test@test.com', role: 'USER' };
+  const mockUser = {
+    userId: 'user-123',
+    email: 'test@test.com',
+    role: UserRole.USER,
+  };
 
   beforeEach(() => {
     mockCreateTrip = { execute: jest.fn() } as any;
@@ -37,7 +42,7 @@ describe('TripsController', () => {
       const trip = createMockTrip();
       mockCreateTrip.execute.mockResolvedValue(trip);
 
-      const result = await controller.create(mockUser as any, {
+      const result = await controller.create(mockUser, {
         title: 'Japan Trip',
         destination: 'Tokyo',
         startDate: '2026-09-15',
@@ -67,7 +72,7 @@ describe('TripsController', () => {
       ];
       mockListTrips.execute.mockResolvedValue(trips);
 
-      const result = await controller.findAll(mockUser as any);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(trips);
       expect(mockListTrips.execute).toHaveBeenCalledWith('user-123');
@@ -79,7 +84,7 @@ describe('TripsController', () => {
       const trip = createMockTrip({ id: 'trip-1' });
       mockGetTrip.execute.mockResolvedValue(trip);
 
-      const result = await controller.findOne('trip-1', mockUser as any);
+      const result = await controller.findOne('trip-1', mockUser);
 
       expect(result).toEqual(trip);
       expect(mockGetTrip.execute).toHaveBeenCalledWith('trip-1', 'user-123');
@@ -91,7 +96,7 @@ describe('TripsController', () => {
       const updated = createMockTrip({ title: 'Updated' });
       mockUpdateTrip.execute.mockResolvedValue(updated);
 
-      const result = await controller.update('trip-1', mockUser as any, {
+      const result = await controller.update('trip-1', mockUser, {
         title: 'Updated',
       });
 
@@ -99,7 +104,7 @@ describe('TripsController', () => {
       expect(mockUpdateTrip.execute).toHaveBeenCalledWith(
         'trip-1',
         { title: 'Updated' },
-        'user-123',
+        mockUser,
       );
     });
   });
@@ -108,7 +113,7 @@ describe('TripsController', () => {
     it('should delete a trip and return success message', async () => {
       mockDeleteTrip.execute.mockResolvedValue(undefined);
 
-      const result = await controller.remove('trip-1', mockUser as any);
+      const result = await controller.remove('trip-1', mockUser);
 
       expect(result).toEqual({ message: 'Trip deleted successfully' });
       expect(mockDeleteTrip.execute).toHaveBeenCalledWith('trip-1', 'user-123');

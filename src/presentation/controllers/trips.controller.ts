@@ -137,7 +137,7 @@ export class TripsController {
     @CurrentUser() user: UserPayload,
     @Body() dto: UpdateTripDto,
   ) {
-    return this.updateTripUseCase.execute(id, dto, user.userId);
+    return this.updateTripUseCase.execute(id, dto, user);
   }
 
   @Delete(':id')

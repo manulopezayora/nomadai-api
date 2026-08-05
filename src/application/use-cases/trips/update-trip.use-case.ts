@@ -4,6 +4,37 @@ import { TripNotFoundException } from '../../../domain/exceptions/trip-not-found
 import { UpdateTripDto } from '../../dto/update-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
+import { UserRole } from '../../../domain/enums/user-role.enum';
+
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  planning: ['active', 'completed'],
+  active: ['completed'],
+  completed: [],
+};
+
+const EDITABLE_FIELDS_BY_STATUS: Record<string, string[]> = {
+  planning: [
+    'title',
+    'destination',
+    'startDate',
+    'endDate',
+    'budget',
+    'travelerCount',
+    'interests',
+    'travelStyle',
+    'status',
+  ],
+  active: [
+    'title',
+    'budget',
+    'travelerCount',
+    'interests',
+    'travelStyle',
+    'status',
+  ],
+  completed: [],
+};
 
 @Injectable()
 export class UpdateTripUseCase {
@@ -15,7 +46,7 @@ export class UpdateTripUseCase {
   async execute(
     tripId: string,
     dto: UpdateTripDto,
-    userId: string,
+    currentUser: { userId: string; role: UserRole },
   ): Promise<Trip> {
     const existing = await this.tripRepository.findById(tripId);
 
@@ -23,8 +54,37 @@ export class UpdateTripUseCase {
       throw new TripNotFoundException(tripId);
     }
 
-    if (existing.userId !== userId) {
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isOwner = existing.userId === currentUser.userId;
+
+    if (!isAdmin && !isOwner) {
       throw new TripNotFoundException(tripId);
+    }
+
+    if (dto.status !== undefined && dto.status !== existing.status) {
+      const allowed = VALID_TRANSITIONS[existing.status] ?? [];
+
+      if (!allowed.includes(dto.status)) {
+        throw new ValidationException(
+          `Cannot change status from '${existing.status}' to '${dto.status}'`,
+        );
+      }
+    }
+
+    if (!isAdmin) {
+      const editableFields = EDITABLE_FIELDS_BY_STATUS[existing.status] ?? [];
+
+      const forbiddenFields = Object.keys(dto).filter(
+        (key) =>
+          dto[key as keyof UpdateTripDto] !== undefined &&
+          !editableFields.includes(key),
+      );
+
+      if (forbiddenFields.length > 0) {
+        throw new ForbiddenException(
+          `Cannot edit fields [${forbiddenFields.join(', ')}] on a '${existing.status}' trip`,
+        );
+      }
     }
 
     const updateData: Record<string, unknown> = {};
