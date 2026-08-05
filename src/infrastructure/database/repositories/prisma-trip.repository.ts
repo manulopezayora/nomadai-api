@@ -8,8 +8,6 @@ import {
 import { Trip } from '../../../domain/entities/trip.entity';
 import { TripMapper } from '../prisma/mappers/trip.mapper';
 
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */
-
 @Injectable()
 export class PrismaTripRepository extends TripRepositoryPort {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {
@@ -32,7 +30,7 @@ export class PrismaTripRepository extends TripRepositoryPort {
       skip: offset,
       take: limit,
     });
-    return trips.map((t) => TripMapper.toDomain(t as any));
+    return trips.map((t) => TripMapper.toDomain(t));
   }
 
   async countByUserId(userId: string): Promise<number> {
@@ -45,7 +43,7 @@ export class PrismaTripRepository extends TripRepositoryPort {
       skip: offset,
       take: limit,
     });
-    return trips.map((t) => TripMapper.toDomain(t as any));
+    return trips.map((t) => TripMapper.toDomain(t));
   }
 
   async count(): Promise<number> {
@@ -53,28 +51,30 @@ export class PrismaTripRepository extends TripRepositoryPort {
   }
 
   async create(data: CreateTripData): Promise<Trip> {
-    const trip = await this.prisma.instance.trip.create({
-      data: TripMapper.toPrismaCreate({
-        userId: data.userId,
-        title: data.title,
-        destination: data.destination,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        budget: data.budget,
-        travelerCount: data.travelerCount ?? 1,
-        preferences: {
-          interests: data.preferences.interests,
-          travelStyle: data.preferences.travelStyle,
-        },
-      }) as any,
+    const prismaData = TripMapper.toPrismaCreate({
+      userId: data.userId,
+      title: data.title,
+      destination: data.destination,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      budget: data.budget,
+      travelerCount: data.travelerCount ?? 1,
+      preferences: {
+        interests: data.preferences.interests,
+        travelStyle: data.preferences.travelStyle,
+      },
     });
+    const trip = await this.prisma.instance.trip.create({ data: prismaData });
     return TripMapper.toDomain(trip);
   }
 
   async update(id: string, data: UpdateTripData): Promise<Trip> {
+    const prismaData = TripMapper.toPrismaUpdate(
+      data as Record<string, unknown>,
+    );
     const trip = await this.prisma.instance.trip.update({
       where: { id },
-      data: TripMapper.toPrismaUpdate(data as Record<string, unknown>),
+      data: prismaData,
     });
     return TripMapper.toDomain(trip);
   }
@@ -83,5 +83,3 @@ export class PrismaTripRepository extends TripRepositoryPort {
     await this.prisma.instance.trip.delete({ where: { id } });
   }
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument */

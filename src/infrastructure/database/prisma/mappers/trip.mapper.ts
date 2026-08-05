@@ -2,7 +2,7 @@ import { Trip, TripPreferences } from '../../../../domain/entities/trip.entity';
 import { TripStatus } from '../../../../domain/enums/trip-status.enum';
 import { TravelStyle } from '../../../../domain/enums/travel-style.enum';
 
-interface RawTrip {
+interface PrismaTrip {
   id: string;
   userId: string;
   title: string;
@@ -18,7 +18,7 @@ interface RawTrip {
 }
 
 export class TripMapper {
-  static toDomain(raw: RawTrip): Trip {
+  static toDomain(raw: PrismaTrip): Trip {
     const prefs = raw.preferences as Record<string, unknown>;
     const interests = Array.isArray(prefs?.interests)
       ? (prefs.interests as string[])
@@ -63,7 +63,6 @@ export class TripMapper {
         interests: data.preferences.interests,
         travelStyle: data.preferences.travelStyle,
       },
-      status: TripStatus.PLANNING,
     };
   }
 

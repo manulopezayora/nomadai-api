@@ -6,26 +6,7 @@ import {
   UserRepositoryPort,
 } from '../../../domain/ports/repositories/user.repository.port';
 import { User } from '../../../domain/entities/user.entity';
-import { UserRole } from '../../../domain/enums/user-role.enum';
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-interface RawUser {
-  id: string;
-  email: string;
-  passwordHash: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  avatarUrl: string | null;
-  provider: string;
-  providerId: string | null;
-  role: any;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
+import { UserMapper } from '../prisma/mappers/user.mapper';
 
 @Injectable()
 export class PrismaUserRepository extends UserRepositoryPort {
@@ -35,14 +16,14 @@ export class PrismaUserRepository extends UserRepositoryPort {
 
   async findById(id: string): Promise<User | null> {
     const user = await this.prisma.instance.user.findUnique({ where: { id } });
-    return user ? this.toDomain(user) : null;
+    return user ? UserMapper.toDomain(user) : null;
   }
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.instance.user.findUnique({
       where: { email },
     });
-    return user ? this.toDomain(user) : null;
+    return user ? UserMapper.toDomain(user) : null;
   }
 
   async findAll(offset: number, limit: number): Promise<User[]> {
@@ -51,7 +32,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
       take: limit,
       orderBy: { createdAt: 'desc' },
     });
-    return users.map((u) => this.toDomain(u));
+    return users.map((u) => UserMapper.toDomain(u));
   }
 
   async count(): Promise<number> {
@@ -69,7 +50,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
         providerId: data.providerId,
       },
     });
-    return this.toDomain(user);
+    return UserMapper.toDomain(user);
   }
 
   async update(id: string, data: UpdateUserData): Promise<User> {
@@ -77,29 +58,12 @@ export class PrismaUserRepository extends UserRepositoryPort {
       where: { id },
       data,
     });
-    return this.toDomain(user);
+    return UserMapper.toDomain(user);
   }
 
   async countActiveAdmins(): Promise<number> {
     return this.prisma.instance.user.count({
       where: { role: 'ADMIN', isActive: true },
     });
-  }
-
-  private toDomain(raw: RawUser): User {
-    return {
-      id: raw.id,
-      email: raw.email,
-      passwordHash: raw.passwordHash,
-      firstName: raw.firstName,
-      lastName: raw.lastName,
-      avatarUrl: raw.avatarUrl,
-      provider: raw.provider,
-      providerId: raw.providerId,
-      role: raw.role as UserRole,
-      isActive: raw.isActive,
-      createdAt: raw.createdAt,
-      updatedAt: raw.updatedAt,
-    };
   }
 }

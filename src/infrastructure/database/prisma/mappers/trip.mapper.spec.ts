@@ -1,4 +1,5 @@
 import { TripMapper } from './trip.mapper';
+import { TravelStyle } from '../../../../domain/enums/travel-style.enum';
 
 describe('TripMapper', () => {
   const rawTrip = {
@@ -54,12 +55,11 @@ describe('TripMapper', () => {
         endDate: new Date('2026-10-10'),
         budget: 1500,
         travelerCount: 2,
-        preferences: { interests: ['art'], travelStyle: 'luxury' },
+        preferences: { interests: ['art'], travelStyle: TravelStyle.LUXURY },
       });
 
       expect(result.userId).toBe('user-1');
       expect(result.title).toBe('Paris Trip');
-      expect(result.status).toBe('planning');
       expect(result.preferences).toEqual({
         interests: ['art'],
         travelStyle: 'luxury',

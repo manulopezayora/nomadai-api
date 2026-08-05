@@ -2,6 +2,7 @@ import { ValidationException } from '../../../domain/exceptions/validation.excep
 import { createMockTripRepository } from '../../../../test/mocks/trip-repository.mock';
 import { createMockTrip } from '../../../../test/mocks/trip.factory';
 import { CreateTripUseCase } from './create-trip.use-case';
+import { TravelStyle } from '../../../domain/enums/travel-style.enum';
 
 describe('CreateTripUseCase', () => {
   let useCase: CreateTripUseCase;
@@ -132,7 +133,7 @@ describe('CreateTripUseCase', () => {
           startDate: '2026-09-15',
           endDate: '2026-09-25',
           interests: ['culture', 'food'],
-          travelStyle: 'luxury',
+          travelStyle: TravelStyle.LUXURY,
           budget: 3000,
           travelerCount: 2,
         },
@@ -149,7 +150,7 @@ describe('CreateTripUseCase', () => {
         travelerCount: 2,
         preferences: {
           interests: ['culture', 'food'],
-          travelStyle: 'luxury',
+          travelStyle: TravelStyle.LUXURY,
         },
       });
     });
