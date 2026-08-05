@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../database/prisma/prisma.module';
 import { PrismaUserRepository } from '../database/repositories/prisma-user.repository';
 import { UserRepositoryPort } from '../../domain/ports/repositories/user.repository.port';
@@ -14,9 +15,15 @@ import { AuthController } from '../../presentation/controllers/auth.controller';
   imports: [
     PrismaModule,
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '15m' } as never,
+    JwtModule.registerAsync({
+      imports: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: config.get('JWT_EXPIRES_IN', '15m'),
+        },
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
