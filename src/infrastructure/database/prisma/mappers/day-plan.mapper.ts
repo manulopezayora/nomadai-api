@@ -29,8 +29,8 @@ export class DayPlanMapper {
     tripId: string;
     dayNumber: number;
     date: Date;
-    title?: string;
-    notes?: string;
+    title?: string | null;
+    notes?: string | null;
   }) {
     return {
       tripId: data.tripId,

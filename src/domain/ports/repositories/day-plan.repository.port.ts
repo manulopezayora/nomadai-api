@@ -4,8 +4,8 @@ export interface CreateDayPlanData {
   tripId: string;
   dayNumber: number;
   date: Date;
-  title?: string;
-  notes?: string;
+  title?: string | null;
+  notes?: string | null;
 }
 
 export interface UpdateDayPlanData {
