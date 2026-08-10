@@ -267,11 +267,16 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ### Day Plans
 
+| Método | Ruta                         | Descripción         | Auth |
+| ------ | ---------------------------- | ------------------- | ---- |
+| POST   | `/trips/:tripId/days`        | Añadir día al viaje | Sí   |
+| PATCH  | `/trips/:tripId/days/:dayId` | Actualizar día      | Sí   |
+| DELETE | `/trips/:tripId/days/:dayId` | Eliminar día        | Sí   |
+
+### Activities
+
 | Método | Ruta                                                | Descripción             | Auth |
 | ------ | --------------------------------------------------- | ----------------------- | ---- |
-| POST   | `/trips/:tripId/days`                               | Añadir día al viaje     | Sí   |
-| PATCH  | `/trips/:tripId/days/:dayId`                        | Actualizar día          | Sí   |
-| DELETE | `/trips/:tripId/days/:dayId`                        | Eliminar día            | Sí   |
 | POST   | `/trips/:tripId/days/:dayId/activities`             | Añadir actividad al día | Sí   |
 | PATCH  | `/trips/:tripId/days/:dayId/activities/:activityId` | Actualizar actividad    | Sí   |
 | DELETE | `/trips/:tripId/days/:dayId/activities/:activityId` | Eliminar actividad      | Sí   |
@@ -369,6 +374,28 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ---
 
+## Reglas de Negocio — Day Plans & Activities
+
+### Day Plans
+
+| #   | Regla                                              | Protege contra                 |
+| --- | -------------------------------------------------- | ------------------------------ |
+| 1   | Solo el propietario del viaje puede CRUD day plans | Acceso no autorizado           |
+| 2   | `dayNumber` debe ser único dentro del viaje        | Días duplicados en un viaje    |
+| 3   | `date` debe estar dentro del rango del viaje       | Días fuera del rango de fechas |
+| 4   | Eliminar viaje elimina todos los días (cascade)    | Datos huérfanos                |
+
+### Activities
+
+| #   | Regla                                                     | Protege contra        |
+| --- | --------------------------------------------------------- | --------------------- |
+| 1   | Solo el propietario del viaje puede CRUD actividades      | Acceso no autorizado  |
+| 2   | `order` se auto-incrementa si no se provee                | Orden inconsistente   |
+| 3   | Actividad pertenece a un day plan que pertenece al viaje  | Actividades huérfanas |
+| 4   | Eliminar day plan elimina todas las actividades (cascade) | Datos huérfanos       |
+
+---
+
 ## Flujo Principal del Usuario
 
 ```
@@ -459,7 +486,7 @@ nomadai-api/
 │   └── ARCHITECTURE.md          # Este archivo
 ├── src/
 │   ├── main.ts                  # Bootstrap, Swagger, ValidationPipe global
-│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users, Trips)
+│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users, Trips, DayPlans, Activities)
 │   │
 │   ├── domain/                  # NÚCLEO (sin dependencias externas)
 │   │   ├── entities/            # Interfaces de dominio puras
@@ -501,7 +528,14 @@ nomadai-api/
 │   │   │   │   ├── list-all-trips.use-case.ts
 │   │   │   │   ├── update-trip.use-case.ts
 │   │   │   │   └── delete-trip.use-case.ts
-│   │   │   ├── day-plans/       # (pendiente - paso 7)
+│   │   │   ├── day-plans/
+│   │   │   │   ├── create-day-plan.use-case.ts
+│   │   │   │   ├── update-day-plan.use-case.ts
+│   │   │   │   └── delete-day-plan.use-case.ts
+│   │   │   ├── activities/
+│   │   │   │   ├── create-activity.use-case.ts
+│   │   │   │   ├── update-activity.use-case.ts
+│   │   │   │   └── delete-activity.use-case.ts
 │   │   │   └── recommendations/ # (pendiente - paso 8-9)
 │   │   └── dto/                 # DTOs de entrada/salida
 │   │       ├── register.dto.ts
@@ -509,7 +543,12 @@ nomadai-api/
 │   │       ├── update-user.dto.ts
 │   │       ├── create-trip.dto.ts
 │   │       ├── update-trip.dto.ts
-│   │       └── ...
+│   │       ├── pagination.dto.ts
+│   │       ├── safe-user.dto.ts
+│   │       ├── create-day-plan.dto.ts
+│   │       ├── update-day-plan.dto.ts
+│   │       ├── create-activity.dto.ts
+│   │       └── update-activity.dto.ts
 │   │
 │   ├── infrastructure/          # ADAPTADORES (implementa puertos)
 │   │   ├── database/
@@ -518,11 +557,14 @@ nomadai-api/
 │   │   │   │   ├── prisma.service.ts     # PrismaService con PrismaPg adapter
 │   │   │   │   └── mappers/              # Mappers Domain <-> Prisma
 │   │   │   │       ├── user.mapper.ts
-│   │   │   │       └── trip.mapper.ts
+│   │   │   │       ├── trip.mapper.ts
+│   │   │   │       ├── day-plan.mapper.ts
+│   │   │   │       └── activity.mapper.ts
 │   │   │   └── repositories/
 │   │   │       ├── prisma-user.repository.ts
 │   │   │       ├── prisma-trip.repository.ts
-│   │   │       └── ...
+│   │   │       ├── prisma-day-plan.repository.ts
+│   │   │       └── prisma-activity.repository.ts
 │   │   ├── auth/
 │   │   │   ├── auth.module.ts
 │   │   │   └── strategies/
@@ -532,6 +574,10 @@ nomadai-api/
 │   │   │   └── users.module.ts
 │   │   ├── trips/
 │   │   │   └── trips.module.ts
+│   │   ├── day-plans/
+│   │   │   └── day-plans.module.ts
+│   │   ├── activities/
+│   │   │   └── activities.module.ts
 │   │   └── ai/                  # (pendiente - paso 8)
 │   │       ├── gemini.module.ts
 │   │       ├── gemini.service.ts
@@ -542,6 +588,8 @@ nomadai-api/
 │   │   │   ├── auth.controller.ts
 │   │   │   ├── users.controller.ts
 │   │   │   ├── trips.controller.ts
+│   │   │   ├── day-plans.controller.ts
+│   │   │   ├── activities.controller.ts
 │   │   │   └── recommendations.controller.ts  # (pendiente - paso 9)
 │   │   ├── guards/
 │   │   │   └── roles.guard.ts
@@ -575,7 +623,11 @@ nomadai-api/
 │   │   ├── jwt-service.mock.ts
 │   │   ├── reflector.mock.ts
 │   │   ├── trip.factory.ts
-│   │   └── trip-repository.mock.ts
+│   │   ├── trip-repository.mock.ts
+│   │   ├── day-plan.factory.ts
+│   │   ├── day-plan-repository.mock.ts
+│   │   ├── activity.factory.ts
+│   │   └── activity-repository.mock.ts
 │   └── jest-e2e.json
 │
 ├── .env                         # Variables de entorno (gitignored)
@@ -634,12 +686,12 @@ Database
 | 5    | **Auth** — Register/Login + JWT                                                 | ✅ Hecho     |
 | 5b   | **Swagger** — Documentación API con @nestjs/swagger                             | ✅ Hecho     |
 | 6    | **Trips** — CRUD de viajes + admin management                                   | ✅ Hecho     |
-| 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ⬜ Pendiente |
+| 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ✅ Hecho     |
 | 8    | **Gemini Module** — Integración con Google Gemini                               | ⬜ Pendiente |
 | 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ⬜ Pendiente |
 | 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho     |
 
-### Estado actual (Hardening completado)
+### Estado actual (Step 7 completado)
 
 **Módulos funcionando:**
 
@@ -654,6 +706,12 @@ Database
 - `GET /trips/:id` — Detalle de viaje (solo propietario o admin)
 - `PATCH /trips/:id` — Actualizar viaje (solo propietario o admin, admin bypass total)
 - `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario o admin)
+- `POST /trips/:tripId/days` — Crear día de itinerario (solo propietario)
+- `PATCH /trips/:tripId/days/:dayId` — Actualizar día (solo propietario)
+- `DELETE /trips/:tripId/days/:dayId` — Eliminar día (solo propietario, cascade activities)
+- `POST /trips/:tripId/days/:dayId/activities` — Crear actividad (solo propietario)
+- `PATCH /trips/:tripId/days/:dayId/activities/:activityId` — Actualizar actividad (solo propietario)
+- `DELETE /trips/:tripId/days/:dayId/activities/:activityId` — Eliminar actividad (solo propietario)
 
 **Hardening completado:**
 
@@ -671,16 +729,7 @@ Database
 
 **Acceso a DB:** `docker exec -it nomadai-postgres psql -U postgres -d nomadai`
 
-### Próximo paso: Day Plans + Activities (Paso 7)
-
-Crear en este orden:
-
-1. `src/application/dto/create-day-plan.dto.ts` — DTO de entrada
-2. `src/application/dto/create-activity.dto.ts` — DTO de actividad
-3. `src/application/use-cases/day-plans/*.use-case.ts` — Casos de uso
-4. `src/infrastructure/database/repositories/prisma-day-plan.repository.ts` — Repository
-5. `src/presentation/controllers/day-plans.controller.ts` — Controller
-6. Registrar módulo en `app.module.ts`
+### Próximo paso: Gemini Module (Paso 8)
 
 ---
 
