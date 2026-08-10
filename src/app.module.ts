@@ -6,6 +6,8 @@ import { PrismaModule } from './infrastructure/database/prisma/prisma.module';
 import { AuthModule } from './infrastructure/auth/auth.module';
 import { UsersModule } from './infrastructure/users/users.module';
 import { TripsModule } from './infrastructure/trips/trips.module';
+import { DayPlansModule } from './infrastructure/day-plans/day-plans.module';
+import { ActivitiesModule } from './infrastructure/activities/activities.module';
 import { envValidationSchema } from './shared/config/env.validation';
 
 @Module({
@@ -19,6 +21,8 @@ import { envValidationSchema } from './shared/config/env.validation';
     AuthModule,
     UsersModule,
     TripsModule,
+    DayPlansModule,
+    ActivitiesModule,
   ],
   controllers: [],
   providers: [

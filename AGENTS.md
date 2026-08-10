@@ -60,22 +60,39 @@ src/
 │   │   ├── auth/
 │   │   │   ├── register.use-case.ts
 │   │   │   └── login.use-case.ts
+│   │   ├── users/
+│   │   │   ├── list-users.use-case.ts
+│   │   │   └── update-user.use-case.ts
 │   │   ├── trips/
 │   │   │   ├── create-trip.use-case.ts
 │   │   │   ├── get-trip.use-case.ts
+│   │   │   ├── list-trips.use-case.ts
+│   │   │   ├── list-all-trips.use-case.ts
 │   │   │   ├── update-trip.use-case.ts
 │   │   │   └── delete-trip.use-case.ts
 │   │   ├── day-plans/
-│   │   │   ├── add-day-plan.use-case.ts
-│   │   │   └── add-activity.use-case.ts
+│   │   │   ├── create-day-plan.use-case.ts
+│   │   │   ├── update-day-plan.use-case.ts
+│   │   │   └── delete-day-plan.use-case.ts
+│   │   ├── activities/
+│   │   │   ├── create-activity.use-case.ts
+│   │   │   ├── update-activity.use-case.ts
+│   │   │   └── delete-activity.use-case.ts
 │   │   └── recommendations/
 │   │       ├── recommend-flights.use-case.ts
 │   │       ├── recommend-hotels.use-case.ts
 │   │       └── recommend-itinerary.use-case.ts
 │   └── dto/                         # DTOs de entrada/salida de casos de uso
-│       ├── create-trip.dto.ts
+│       ├── register.dto.ts
 │       ├── login.dto.ts
-│       └── ...
+│       ├── create-trip.dto.ts
+│       ├── update-trip.dto.ts
+│       ├── pagination.dto.ts
+│       ├── safe-user.dto.ts
+│       ├── create-day-plan.dto.ts
+│       ├── update-day-plan.dto.ts
+│       ├── create-activity.dto.ts
+│       └── update-activity.dto.ts
 │
 ├── infrastructure/                  # ADAPTADORES (implementa puertos)
 │   ├── database/                    # Adaptador de persistencia
@@ -84,25 +101,39 @@ src/
 │   │   │   ├── prisma.service.ts
 │   │   │   └── mappers/             # Mappers Domain <-> Prisma
 │   │   │       ├── user.mapper.ts
-│   │   │       └── ...
+│   │   │       ├── trip.mapper.ts
+│   │   │       ├── day-plan.mapper.ts
+│   │   │       └── activity.mapper.ts
 │   │   └── repositories/            # Implementación de puertos de repositorio
 │   │       ├── prisma-user.repository.ts
 │   │       ├── prisma-trip.repository.ts
-│   │       └── ...
+│   │       ├── prisma-day-plan.repository.ts
+│   │       └── prisma-activity.repository.ts
 │   ├── ai/                          # Adaptador de IA
 │   │   ├── gemini.module.ts
 │   │   ├── gemini.service.ts        # Implementa gemini.port.ts
 │   │   └── schemas/                 # Schemas de respuesta de Gemini
-│   └── auth/                        # Adaptador de autenticación
-│       ├── strategies/
-│       ├── guards/
-│       └── decorators/
+│   ├── auth/                        # Adaptador de autenticación
+│   │   ├── auth.module.ts
+│   │   ├── strategies/
+│   │   │   ├── local.strategy.ts
+│   │   │   └── jwt.strategy.ts
+│   ├── users/
+│   │   └── users.module.ts
+│   ├── trips/
+│   │   └── trips.module.ts
+│   ├── day-plans/
+│   │   └── day-plans.module.ts
+│   └── activities/
+│       └── activities.module.ts
 │
 ├── presentation/                    # ADAPTADOR DE ENTRADA (HTTP)
 │   ├── controllers/                 # Controladores NestJS (thin controllers)
 │   │   ├── auth.controller.ts
 │   │   ├── users.controller.ts
 │   │   ├── trips.controller.ts
+│   │   ├── day-plans.controller.ts
+│   │   ├── activities.controller.ts
 │   │   └── recommendations.controller.ts
 │   ├── interceptors/                # Interceptors
 │   │   └── gemini-exception.interceptor.ts
@@ -680,14 +711,18 @@ describe('SomeUseCase', () => {
 
 ### Mock factories disponibles
 
-| Factory                      | Ubicación                            | Uso                    |
-| ---------------------------- | ------------------------------------ | ---------------------- |
-| `createMockUser()`           | `test/mocks/user.factory.ts`         | Usuario de prueba      |
-| `createMockAdmin()`          | `test/mocks/user.factory.ts`         | Admin de prueba        |
-| `createMockUserRepository()` | `test/mocks/user-repository.mock.ts` | Mock completo del repo |
-| `createMockJwtService()`     | `test/mocks/jwt-service.mock.ts`     | Mock de JwtService     |
-| `createMockTrip()`           | `test/mocks/trip.factory.ts`         | Viaje de prueba        |
-| `createMockTripRepository()` | `test/mocks/trip-repository.mock.ts` | Mock completo del repo |
+| Factory                          | Ubicación                                | Uso                    |
+| -------------------------------- | ---------------------------------------- | ---------------------- |
+| `createMockUser()`               | `test/mocks/user.factory.ts`             | Usuario de prueba      |
+| `createMockAdmin()`              | `test/mocks/user.factory.ts`             | Admin de prueba        |
+| `createMockUserRepository()`     | `test/mocks/user-repository.mock.ts`     | Mock completo del repo |
+| `createMockJwtService()`         | `test/mocks/jwt-service.mock.ts`         | Mock de JwtService     |
+| `createMockTrip()`               | `test/mocks/trip.factory.ts`             | Viaje de prueba        |
+| `createMockTripRepository()`     | `test/mocks/trip-repository.mock.ts`     | Mock completo del repo |
+| `createMockDayPlan()`            | `test/mocks/day-plan.factory.ts`         | Día de prueba          |
+| `createMockDayPlanRepository()`  | `test/mocks/day-plan-repository.mock.ts` | Mock completo del repo |
+| `createMockActivity()`           | `test/mocks/activity.factory.ts`         | Actividad de prueba    |
+| `createMockActivityRepository()` | `test/mocks/activity-repository.mock.ts` | Mock completo del repo |
 
 ### Comandos de test
 
