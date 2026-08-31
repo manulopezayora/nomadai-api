@@ -12,18 +12,20 @@ describe('GetTripUseCase', () => {
     useCase = new GetTripUseCase(mockTripRepo);
   });
 
-  it('should return trip when found and owned by user', async () => {
+  it('should return trip with details when found and owned by user', async () => {
     const trip = createMockTrip({ id: 'trip-1', userId: 'user-1' });
-    mockTripRepo.findById.mockResolvedValue(trip);
+    const tripWithDetails = { ...trip, dayPlans: [] };
+    mockTripRepo.findByIdWithDetails.mockResolvedValue(tripWithDetails);
 
     const result = await useCase.execute('trip-1', 'user-1');
 
-    expect(result).toEqual(trip);
-    expect(mockTripRepo.findById).toHaveBeenCalledWith('trip-1');
+    expect(result).toEqual(tripWithDetails);
+    expect(result.dayPlans).toEqual([]);
+    expect(mockTripRepo.findByIdWithDetails).toHaveBeenCalledWith('trip-1');
   });
 
   it('should throw TripNotFoundException when trip not found', async () => {
-    mockTripRepo.findById.mockResolvedValue(null);
+    mockTripRepo.findByIdWithDetails.mockResolvedValue(null);
 
     await expect(useCase.execute('trip-999', 'user-1')).rejects.toThrow(
       TripNotFoundException,
@@ -32,7 +34,8 @@ describe('GetTripUseCase', () => {
 
   it('should throw TripNotFoundException when user does not own trip', async () => {
     const trip = createMockTrip({ id: 'trip-1', userId: 'user-2' });
-    mockTripRepo.findById.mockResolvedValue(trip);
+    const tripWithDetails = { ...trip, dayPlans: [] };
+    mockTripRepo.findByIdWithDetails.mockResolvedValue(tripWithDetails);
 
     await expect(useCase.execute('trip-1', 'user-1')).rejects.toThrow(
       TripNotFoundException,

@@ -1,4 +1,4 @@
-import { Trip } from '../../entities/trip.entity';
+import { Trip, TripWithDetails } from '../../entities/trip.entity';
 import { TripStatus } from '../../enums/trip-status.enum';
 import { TravelStyle } from '../../enums/travel-style.enum';
 
@@ -32,6 +32,7 @@ export interface UpdateTripData {
 
 export abstract class TripRepositoryPort {
   abstract findById(id: string): Promise<Trip | null>;
+  abstract findByIdWithDetails(id: string): Promise<TripWithDetails | null>;
   abstract findByUserId(
     userId: string,
     offset: number,

@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TripRepositoryPort } from '../../../domain/ports/repositories/trip.repository.port';
 import { TripNotFoundException } from '../../../domain/exceptions/trip-not-found.exception';
-import { Trip } from '../../../domain/entities/trip.entity';
+import { TripWithDetails } from '../../../domain/entities/trip.entity';
 
 @Injectable()
 export class GetTripUseCase {
@@ -10,8 +10,8 @@ export class GetTripUseCase {
     private readonly tripRepository: TripRepositoryPort,
   ) {}
 
-  async execute(tripId: string, userId: string): Promise<Trip> {
-    const trip = await this.tripRepository.findById(tripId);
+  async execute(tripId: string, userId: string): Promise<TripWithDetails> {
+    const trip = await this.tripRepository.findByIdWithDetails(tripId);
 
     if (!trip) {
       throw new TripNotFoundException(tripId);

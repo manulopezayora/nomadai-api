@@ -1,6 +1,12 @@
-import { Trip, TripPreferences } from '../../../../domain/entities/trip.entity';
+import {
+  Trip,
+  TripPreferences,
+  TripWithDetails,
+} from '../../../../domain/entities/trip.entity';
 import { TripStatus } from '../../../../domain/enums/trip-status.enum';
 import { TravelStyle } from '../../../../domain/enums/travel-style.enum';
+import { DayPlanMapper } from './day-plan.mapper';
+import { ActivityMapper } from './activity.mapper';
 
 interface PrismaTrip {
   id: string;
@@ -15,6 +21,39 @@ interface PrismaTrip {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface PrismaDayPlanWithActivities {
+  id: string;
+  tripId: string;
+  dayNumber: number;
+  date: Date;
+  title: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  activities: Array<{
+    id: string;
+    dayPlanId: string;
+    title: string;
+    description: string | null;
+    location: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    startTime: string | null;
+    endTime: string | null;
+    cost: number | null;
+    bookingUrl: string | null;
+    category: string | null;
+    placeId: string | null;
+    order: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+}
+
+interface PrismaTripWithDetails extends PrismaTrip {
+  dayPlans: PrismaDayPlanWithActivities[];
 }
 
 export class TripMapper {
@@ -39,6 +78,19 @@ export class TripMapper {
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
     };
+  }
+
+  static toDomainWithDetails(raw: PrismaTripWithDetails): TripWithDetails {
+    const trip = TripMapper.toDomain(raw);
+
+    const dayPlans = raw.dayPlans.map((dayPlan) => ({
+      ...DayPlanMapper.toDomain(dayPlan),
+      activities: dayPlan.activities.map((activity) =>
+        ActivityMapper.toDomain(activity),
+      ),
+    }));
+
+    return { ...trip, dayPlans };
   }
 
   static toPrismaCreate(data: {

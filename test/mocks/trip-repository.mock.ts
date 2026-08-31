@@ -3,6 +3,7 @@ import { TripRepositoryPort } from '../../src/domain/ports/repositories/trip.rep
 export const createMockTripRepository = () =>
   ({
     findById: jest.fn(),
+    findByIdWithDetails: jest.fn(),
     findByUserId: jest.fn(),
     countByUserId: jest.fn(),
     findAll: jest.fn(),

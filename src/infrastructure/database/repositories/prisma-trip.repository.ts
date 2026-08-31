@@ -5,7 +5,7 @@ import {
   UpdateTripData,
   TripRepositoryPort,
 } from '../../../domain/ports/repositories/trip.repository.port';
-import { Trip } from '../../../domain/entities/trip.entity';
+import { Trip, TripWithDetails } from '../../../domain/entities/trip.entity';
 import { TripMapper } from '../prisma/mappers/trip.mapper';
 
 @Injectable()
@@ -17,6 +17,23 @@ export class PrismaTripRepository extends TripRepositoryPort {
   async findById(id: string): Promise<Trip | null> {
     const trip = await this.prisma.instance.trip.findUnique({ where: { id } });
     return trip ? TripMapper.toDomain(trip) : null;
+  }
+
+  async findByIdWithDetails(id: string): Promise<TripWithDetails | null> {
+    const trip = await this.prisma.instance.trip.findUnique({
+      where: { id },
+      include: {
+        dayPlans: {
+          orderBy: { dayNumber: 'asc' },
+          include: {
+            activities: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
+      },
+    });
+    return trip ? TripMapper.toDomainWithDetails(trip) : null;
   }
 
   async findByUserId(
