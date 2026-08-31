@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { GeminiPort } from '../../domain/ports/services/gemini.port';
@@ -10,7 +10,7 @@ export class GeminiService extends GeminiPort implements OnModuleInit {
   private ai!: GoogleGenAI;
   private readonly model = 'gemini-2.5-flash';
 
-  constructor(private readonly config: ConfigService) {
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) {
     super();
   }
 

@@ -16,7 +16,6 @@ import { AuthController } from '../../presentation/controllers/auth.controller';
     PrismaModule,
     PassportModule,
     JwtModule.registerAsync({
-      imports: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
         signOptions: {
