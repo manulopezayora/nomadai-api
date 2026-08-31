@@ -37,14 +37,14 @@ describe('ActivitiesController', () => {
 
       const result = await controller.create('trip-123', 'day-123', mockUser, {
         title: 'Visit Temple',
-        category: ActivityCategory.TEMPLE,
+        category: ActivityCategory.CULTURE,
       });
 
       expect(result).toEqual(activity);
       expect(mockCreateActivity.execute).toHaveBeenCalledWith(
         'trip-123',
         'day-123',
-        { title: 'Visit Temple', category: ActivityCategory.TEMPLE },
+        { title: 'Visit Temple', category: ActivityCategory.CULTURE },
         'user-123',
       );
     });

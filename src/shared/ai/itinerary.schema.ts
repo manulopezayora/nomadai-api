@@ -34,6 +34,8 @@ export const itinerarySchema = {
                     'shopping',
                     'nightlife',
                     'transport',
+                    'stay',
+                    'flight',
                     'other',
                   ],
                   description: 'Activity category',

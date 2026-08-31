@@ -128,7 +128,7 @@ describe('CreateActivityUseCase', () => {
         {
           title: 'Visit Senso-ji',
           description: 'Oldest temple',
-          category: ActivityCategory.TEMPLE,
+          category: ActivityCategory.CULTURE,
           startTime: '09:00',
           endTime: '12:00',
         },
@@ -146,7 +146,7 @@ describe('CreateActivityUseCase', () => {
         endTime: '12:00',
         cost: undefined,
         bookingUrl: undefined,
-        category: ActivityCategory.TEMPLE,
+        category: ActivityCategory.CULTURE,
         placeId: undefined,
         order: undefined,
       });
