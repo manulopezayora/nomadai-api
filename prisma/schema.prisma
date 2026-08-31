@@ -115,19 +115,24 @@ model Activity {
 // ─── FlightRecommendation ───────────────────────────────────────────
 
 model FlightRecommendation {
-  id            String   @id @default(cuid())
-  tripId        String   @map("trip_id")
-  airline       String
-  departure     String
-  arrival       String
-  departureTime String   @map("departure_time")
-  arrivalTime   String   @map("arrival_time")
-  price         Float?
-  currency      String   @default("EUR")
-  bookingUrl    String?  @map("booking_url")
-  notes         String?
-  isRecommended Boolean  @default(false) @map("is_recommended")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  tripId          String   @map("trip_id")
+  airline         String
+  flightNumber    String?  @map("flight_number")
+  departure       String
+  arrival         String
+  departureDate   String?  @map("departure_date")
+  departureTime   String   @map("departure_time")
+  arrivalTime     String   @map("arrival_time")
+  price           Float?
+  currency        String   @default("EUR")
+  class           String?
+  stops           Int?
+  durationMinutes Int?     @map("duration_minutes")
+  bookingUrl      String?  @map("booking_url")
+  notes           String?
+  isRecommended   Boolean  @default(false) @map("is_recommended")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
