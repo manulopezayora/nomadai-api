@@ -150,7 +150,7 @@ For each day, provide:
 For each activity within a day, provide:
 - title
 - description
-- category (one of: sightseeing, food, culture, adventure, relaxation, shopping, nightlife, transport, other)
+- category (one of: sightseeing, food, culture, adventure, relaxation, shopping, nightlife, transport, stay, flight, other)
 - startTime (HH:MM)
 - endTime (HH:MM)
 - locationName

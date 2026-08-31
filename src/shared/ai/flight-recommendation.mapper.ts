@@ -2,17 +2,18 @@ import { CreateFlightRecommendationData } from '../../domain/ports/repositories/
 
 interface GeminiFlight {
   airline: string;
+  flightNumber?: string;
   origin: string;
   destination: string;
+  departureDate?: string;
   departureTime?: string;
   arrivalTime?: string;
   price: number;
   currency?: string;
-  bookingUrl?: string;
-  flightNumber?: string;
   class?: string;
   stops?: number;
   durationMinutes?: number;
+  bookingUrl?: string;
 }
 
 export interface GeminiFlightResponse {
@@ -26,26 +27,19 @@ export class FlightRecommendationMapper {
     const data = response as GeminiFlightResponse;
     return data.flights.map((flight) => ({
       airline: flight.airline,
+      flightNumber: flight.flightNumber ?? null,
       departure: flight.origin,
       arrival: flight.destination,
+      departureDate: flight.departureDate ?? null,
       departureTime: flight.departureTime ?? '',
       arrivalTime: flight.arrivalTime ?? '',
       price: flight.price ?? null,
       currency: flight.currency ?? 'EUR',
+      class: flight.class ?? null,
+      stops: flight.stops ?? null,
+      durationMinutes: flight.durationMinutes ?? null,
       bookingUrl: flight.bookingUrl ?? null,
-      notes:
-        [
-          flight.flightNumber ? `Flight: ${flight.flightNumber}` : null,
-          flight.class ? `Class: ${flight.class}` : null,
-          flight.stops !== undefined
-            ? `${flight.stops === 0 ? 'Direct' : `${flight.stops} stop(s)`}`
-            : null,
-          flight.durationMinutes
-            ? `Duration: ${Math.floor(flight.durationMinutes / 60)}h ${flight.durationMinutes % 60}m`
-            : null,
-        ]
-          .filter(Boolean)
-          .join(' | ') || null,
+      notes: null,
       isRecommended: true,
     }));
   }

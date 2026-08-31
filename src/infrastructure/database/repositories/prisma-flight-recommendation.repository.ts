@@ -21,12 +21,17 @@ export class PrismaFlightRecommendationRepository extends FlightRecommendationRe
       id: r.id,
       tripId: r.tripId,
       airline: r.airline,
+      flightNumber: r.flightNumber,
       departure: r.departure,
       arrival: r.arrival,
+      departureDate: r.departureDate,
       departureTime: r.departureTime,
       arrivalTime: r.arrivalTime,
       price: r.price,
       currency: r.currency,
+      class: r.class,
+      stops: r.stops,
+      durationMinutes: r.durationMinutes,
       bookingUrl: r.bookingUrl,
       notes: r.notes,
       isRecommended: r.isRecommended,
@@ -42,23 +47,27 @@ export class PrismaFlightRecommendationRepository extends FlightRecommendationRe
       where: { tripId },
     });
 
-    const created = await this.prisma.instance.flightRecommendation.createMany({
+    await this.prisma.instance.flightRecommendation.createMany({
       data: data.map((d) => ({
         tripId,
         airline: d.airline,
+        flightNumber: d.flightNumber,
         departure: d.departure,
         arrival: d.arrival,
+        departureDate: d.departureDate,
         departureTime: d.departureTime,
         arrivalTime: d.arrivalTime,
         price: d.price,
         currency: d.currency,
+        class: d.class,
+        stops: d.stops,
+        durationMinutes: d.durationMinutes,
         bookingUrl: d.bookingUrl,
         notes: d.notes,
         isRecommended: d.isRecommended,
       })),
     });
 
-    void created;
     return this.findByTripId(tripId);
   }
 

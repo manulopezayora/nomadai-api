@@ -1,10 +1,13 @@
 export enum ActivityCategory {
-  MUSEUM = 'museum',
-  RESTAURANT = 'restaurant',
-  TEMPLE = 'temple',
+  SIGHTSEEING = 'sightseeing',
+  FOOD = 'food',
+  CULTURE = 'culture',
+  ADVENTURE = 'adventure',
+  RELAXATION = 'relaxation',
   SHOPPING = 'shopping',
+  NIGHTLIFE = 'nightlife',
   TRANSPORT = 'transport',
-  HOTEL = 'hotel',
-  ACTIVITY = 'activity',
+  STAY = 'stay',
+  FLIGHT = 'flight',
   OTHER = 'other',
 }

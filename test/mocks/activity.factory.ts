@@ -15,7 +15,7 @@ export const createMockActivity = (
   endTime: '12:00',
   cost: 0,
   bookingUrl: null,
-  category: ActivityCategory.TEMPLE,
+  category: ActivityCategory.CULTURE,
   placeId: 'ChIJ1dtyCfKJGGARixz6lgJT3Ys',
   order: 1,
   createdAt: new Date('2026-01-01'),

@@ -2,12 +2,17 @@ import { FlightRecommendation } from '../../entities/flight-recommendation.entit
 
 export interface CreateFlightRecommendationData {
   airline: string;
+  flightNumber: string | null;
   departure: string;
   arrival: string;
+  departureDate: string | null;
   departureTime: string;
   arrivalTime: string;
   price: number | null;
   currency: string;
+  class: string | null;
+  stops: number | null;
+  durationMinutes: number | null;
   bookingUrl: string | null;
   notes: string | null;
   isRecommended: boolean;
