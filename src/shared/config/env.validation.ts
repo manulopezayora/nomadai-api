@@ -7,7 +7,11 @@ export const envValidationSchema = Joi.object({
   GOOGLE_CLIENT_ID: Joi.string().allow('').optional(),
   GOOGLE_CLIENT_SECRET: Joi.string().allow('').optional(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().optional(),
-  GEMINI_API_KEY: Joi.string().allow('').optional(),
+  GEMINI_API_KEY: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.string().allow('').optional(),
+  }),
   GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
   PORT: Joi.number().default(3000),
   NODE_ENV: Joi.string()
