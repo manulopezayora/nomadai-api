@@ -20,12 +20,14 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
+import { GenerateTripUseCase } from '../../application/use-cases/trips/generate-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
 import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
 import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip.use-case';
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
+import { GenerateTripDto } from '../../application/dto/generate-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
 import { PaginationDto } from '../../application/dto/pagination.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
@@ -43,6 +45,8 @@ export class TripsController {
   constructor(
     @Inject(CreateTripUseCase)
     private readonly createTripUseCase: CreateTripUseCase,
+    @Inject(GenerateTripUseCase)
+    private readonly generateTripUseCase: GenerateTripUseCase,
     @Inject(GetTripUseCase)
     private readonly getTripUseCase: GetTripUseCase,
     @Inject(ListTripsUseCase)
@@ -54,6 +58,34 @@ export class TripsController {
     @Inject(DeleteTripUseCase)
     private readonly deleteTripUseCase: DeleteTripUseCase,
   ) {}
+
+  @Post('generate')
+  @ApiOperation({
+    summary: 'Generate a trip from a natural language prompt using AI',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['prompt'],
+      properties: {
+        prompt: {
+          type: 'string',
+          example: '10 days in Japan, culture and relax',
+          description: 'Natural language description of the trip',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Trip generated and created' })
+  @ApiResponse({ status: 400, description: 'Invalid prompt' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 500, description: 'AI service error' })
+  async generate(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: GenerateTripDto,
+  ) {
+    return this.generateTripUseCase.execute(dto, user.userId);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new trip' })
