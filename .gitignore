@@ -9,6 +9,9 @@
 .windsurf/
 skills-lock.json
 
+# pnpm local store
+.pnpm-store/
+
 # Logs
 logs
 *.log
@@ -43,6 +46,7 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
+.env.test
 .env.docker
 .env.production
 .env.development.local
