@@ -13,7 +13,7 @@ import {
   ItineraryResponse,
 } from '../../../shared/ai/itinerary.mapper';
 
-interface ItineraryResult {
+export interface ItineraryResult {
   dayPlans: DayPlan[];
   activities: Activity[];
 }
