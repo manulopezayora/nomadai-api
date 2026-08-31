@@ -87,16 +87,18 @@ ${dto.amenities?.length ? `- Desired amenities: ${dto.amenities.join(', ')}` : '
 
 For each hotel, provide:
 - name
+- neighborhood (district or area name, e.g. "Shinjuku")
 - city
 - country
 - latitude
 - longitude
-- pricePerNight (estimated in EUR)
+- pricePerNight (discounted or current price in EUR)
+- originalPricePerNight (original price before discount, if applicable; otherwise same as pricePerNight)
 - currency (EUR)
 - starRating (1-5)
-- checkIn (time like "15:00")
-- checkOut (time like "11:00")
+- reviewCount (estimated number of reviews)
 - amenities (list)
+- imageUrl (a real photo URL from the hotel's website or Google Maps)
 - bookingUrl (a generic search URL like https://www.booking.com)
 
 Return 3-4 realistic options with varying price ranges.`;
