@@ -1,4 +1,4 @@
-import { CreateHotelRecommendationData } from '../../../../domain/ports/repositories/hotel-recommendation.repository.port';
+import { CreateHotelRecommendationData } from '../../domain/ports/repositories/hotel-recommendation.repository.port';
 
 interface GeminiHotel {
   name: string;
@@ -16,15 +16,14 @@ interface GeminiHotel {
   checkOut?: string;
 }
 
-interface GeminiHotelResponse {
+export interface GeminiHotelResponse {
   hotels: GeminiHotel[];
 }
 
 export class HotelRecommendationMapper {
-  static toCreateDataArray(
-    response: GeminiHotelResponse,
-  ): CreateHotelRecommendationData[] {
-    return response.hotels.map((hotel) => ({
+  static toCreateDataArray(response: unknown): CreateHotelRecommendationData[] {
+    const data = response as GeminiHotelResponse;
+    return data.hotels.map((hotel) => ({
       name: hotel.name,
       location: [hotel.city, hotel.country].filter(Boolean).join(', '),
       latitude: hotel.latitude ?? null,

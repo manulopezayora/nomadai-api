@@ -1,4 +1,4 @@
-import { CreateFlightRecommendationData } from '../../../../domain/ports/repositories/flight-recommendation.repository.port';
+import { CreateFlightRecommendationData } from '../../domain/ports/repositories/flight-recommendation.repository.port';
 
 interface GeminiFlight {
   airline: string;
@@ -15,15 +15,16 @@ interface GeminiFlight {
   durationMinutes?: number;
 }
 
-interface GeminiFlightResponse {
+export interface GeminiFlightResponse {
   flights: GeminiFlight[];
 }
 
 export class FlightRecommendationMapper {
   static toCreateDataArray(
-    response: GeminiFlightResponse,
+    response: unknown,
   ): CreateFlightRecommendationData[] {
-    return response.flights.map((flight) => ({
+    const data = response as GeminiFlightResponse;
+    return data.flights.map((flight) => ({
       airline: flight.airline,
       departure: flight.origin,
       arrival: flight.destination,

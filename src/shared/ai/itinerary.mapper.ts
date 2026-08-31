@@ -1,4 +1,4 @@
-import { ActivityCategory } from '../../../../domain/enums/activity-category.enum';
+import { ActivityCategory } from '../../domain/enums/activity-category.enum';
 
 interface GeminiItineraryActivity {
   title: string;
