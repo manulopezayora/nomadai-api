@@ -240,19 +240,18 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ### Auth
 
-| Método | Ruta                    | Descripción                     | Auth |
-| ------ | ----------------------- | ------------------------------- | ---- |
-| POST   | `/auth/register`        | Registro email+contraseña       | No   |
-| POST   | `/auth/login`           | Login, retorna JWT en cookie    | No   |
-| GET    | `/auth/google`          | Redirige a Google OAuth         | No   |
-| GET    | `/auth/google/callback` | Callback de Google, retorna JWT | No   |
-| POST   | `/auth/logout`          | Borra cookie de JWT             | Sí   |
+| Método | Ruta             | Descripción                    | Auth |
+| ------ | ---------------- | ------------------------------ | ---- |
+| POST   | `/auth/register` | Registro email+contraseña      | No   |
+| POST   | `/auth/login`    | Login, retorna JWT en body     | No   |
+| GET    | `/auth/profile`  | Perfil del usuario autenticado | Sí   |
 
 ### Users
 
-| Método | Ruta        | Descripción               | Auth |
-| ------ | ----------- | ------------------------- | ---- |
-| GET    | `/users/me` | Perfil del usuario actual | Sí   |
+| Método | Ruta         | Descripción             | Auth  |
+| ------ | ------------ | ----------------------- | ----- |
+| GET    | `/users`     | Listar usuarios (ADMIN) | ADMIN |
+| PATCH  | `/users/:id` | Actualizar usuario      | Sí    |
 
 ### Trips
 
@@ -281,14 +280,13 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 | PATCH  | `/trips/:tripId/days/:dayId/activities/:activityId` | Actualizar actividad    | Sí   |
 | DELETE | `/trips/:tripId/days/:dayId/activities/:activityId` | Eliminar actividad      | Sí   |
 
-### Gemini (Recomendaciones IA)
+### Recommendations (Gemini IA)
 
-| Método | Ruta                                  | Descripción                  | Auth |
-| ------ | ------------------------------------- | ---------------------------- | ---- |
-| POST   | `/trips/:tripId/recommend/flights`    | Recomendar vuelos con IA     | Sí   |
-| POST   | `/trips/:tripId/recommend/hotels`     | Recomendar hoteles con IA    | Sí   |
-| POST   | `/trips/:tripId/recommend/itinerary`  | Generar itinerario día a día | Sí   |
-| POST   | `/trips/:tripId/recommend/activities` | Recomendar actividades       | Sí   |
+| Método | Ruta                                 | Descripción                  | Auth |
+| ------ | ------------------------------------ | ---------------------------- | ---- |
+| POST   | `/trips/:tripId/recommend/flights`   | Recomendar vuelos con IA     | Sí   |
+| POST   | `/trips/:tripId/recommend/hotels`    | Recomendar hoteles con IA    | Sí   |
+| POST   | `/trips/:tripId/recommend/itinerary` | Generar itinerario día a día | Sí   |
 
 ---
 
@@ -400,13 +398,14 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ```
 1. POST /auth/register  →  Cuenta creada
-2. POST /auth/login     →  JWT en cookie httpOnly
+2. POST /auth/login     →  JWT en body
 3. POST /trips           →  { destination: "Japón", startDate: "2026-04-01", ... }
-4. POST /trips/:id/recommend/itinerary  →  Gemini genera plan completo
+4. POST /trips/:id/recommend/flights    →  Gemini genera opciones de vuelos
+5. POST /trips/:id/recommend/hotels     →  Gemini genera opciones de hoteles
+6. POST /trips/:id/recommend/itinerary  →  Gemini genera plan completo
    → Se guardan: DayPlan[] con Activity[] dentro (con lat/lng)
-   → Se guardan: FlightRecommendation[] y HotelRecommendation[]
-5. GET /trips/:id        →  Ver plan completo con todos los días
-6. PUT/PATCH/DELETE      →  Modificar según preferencias
+7. GET /trips/:id        →  Ver plan completo con todos los días
+8. PATCH/DELETE          →  Modificar según preferencias
 ```
 
 ---
@@ -449,6 +448,7 @@ pnpm add bcryptjs
 pnpm add class-validator class-transformer
 pnpm add @nestjs/throttler
 pnpm add @nestjs/swagger
+pnpm add @google/genai
 pnpm add reflect-metadata rxjs
 ```
 
@@ -457,7 +457,6 @@ pnpm add reflect-metadata rxjs
 ```bash
 pnpm add passport-google-oauth20   # Google OAuth (fase 2)
 pnpm add cookie-parser              # Cookies (fase 2)
-pnpm add @google/genai              # Gemini SDK (fase 2)
 ```
 
 ### Desarrollo
@@ -466,15 +465,6 @@ pnpm add @google/genai              # Gemini SDK (fase 2)
 pnpm add -D prisma @types/pg
 pnpm add -D @types/passport-local @types/passport-jwt
 ```
-
-### Producción (Prisma 7 - driver adapter requerido)
-
-```bash
-pnpm add @prisma/client @prisma/adapter-pg pg bcryptjs
-```
-
-> **Nota Prisma 7**: La conexión a PostgreSQL requiere un driver adapter (`@prisma/adapter-pg`).
-> Ver `src/infrastructure/database/prisma/prisma.service.ts` para el patrón correcto.
 
 ---
 
@@ -486,7 +476,7 @@ nomadai-api/
 │   └── ARCHITECTURE.md          # Este archivo
 ├── src/
 │   ├── main.ts                  # Bootstrap, Swagger, ValidationPipe global
-│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users, Trips, DayPlans, Activities)
+│   ├── app.module.ts            # Módulo raíz (Config, Throttler, Prisma, Auth, Users, Trips, DayPlans, Activities, Gemini, Recommendations)
 │   │
 │   ├── domain/                  # NÚCLEO (sin dependencias externas)
 │   │   ├── entities/            # Interfaces de dominio puras
@@ -505,12 +495,20 @@ nomadai-api/
 │   │   │   ├── repositories/    # Puertos de salida (DRIVER)
 │   │   │   │   ├── user.repository.port.ts
 │   │   │   │   ├── trip.repository.port.ts
-│   │   │   │   └── ...
+│   │   │   │   ├── day-plan.repository.port.ts
+│   │   │   │   ├── activity.repository.port.ts
+│   │   │   │   ├── flight-recommendation.repository.port.ts
+│   │   │   │   └── hotel-recommendation.repository.port.ts
 │   │   │   └── services/        # Puertos de entrada (DRIVEN)
-│   │   │       ├── gemini.port.ts
-│   │   │       └── ...
+│   │   │       └── gemini.port.ts
 │   │   ├── value-objects/       # Objetos de valor (si aplica)
 │   │   └── exceptions/          # Excepciones de dominio
+│   │       ├── domain.exception.ts
+│   │       ├── not-found.exception.ts
+│   │       ├── conflict.exception.ts
+│   │       ├── forbidden.exception.ts
+│   │       ├── unauthorized.exception.ts
+│   │       ├── validation.exception.ts
 │   │       └── trip-not-found.exception.ts
 │   │
 │   ├── application/             # CASOS DE USO (depende solo de domain)
@@ -536,19 +534,24 @@ nomadai-api/
 │   │   │   │   ├── create-activity.use-case.ts
 │   │   │   │   ├── update-activity.use-case.ts
 │   │   │   │   └── delete-activity.use-case.ts
-│   │   │   └── recommendations/ # (pendiente - paso 8-9)
+│   │   │   └── recommendations/
+│   │   │       ├── recommend-flights.use-case.ts
+│   │   │       ├── recommend-hotels.use-case.ts
+│   │   │       └── recommend-itinerary.use-case.ts
 │   │   └── dto/                 # DTOs de entrada/salida
 │   │       ├── register.dto.ts
 │   │       ├── login.dto.ts
+│   │       ├── safe-user.dto.ts
 │   │       ├── update-user.dto.ts
 │   │       ├── create-trip.dto.ts
 │   │       ├── update-trip.dto.ts
 │   │       ├── pagination.dto.ts
-│   │       ├── safe-user.dto.ts
 │   │       ├── create-day-plan.dto.ts
 │   │       ├── update-day-plan.dto.ts
 │   │       ├── create-activity.dto.ts
-│   │       └── update-activity.dto.ts
+│   │       ├── update-activity.dto.ts
+│   │       ├── recommend-flights.dto.ts
+│   │       └── recommend-hotels.dto.ts
 │   │
 │   ├── infrastructure/          # ADAPTADORES (implementa puertos)
 │   │   ├── database/
@@ -564,7 +567,12 @@ nomadai-api/
 │   │   │       ├── prisma-user.repository.ts
 │   │   │       ├── prisma-trip.repository.ts
 │   │   │       ├── prisma-day-plan.repository.ts
-│   │   │       └── prisma-activity.repository.ts
+│   │   │       ├── prisma-activity.repository.ts
+│   │   │       ├── prisma-flight-recommendation.repository.ts
+│   │   │       └── prisma-hotel-recommendation.repository.ts
+│   │   ├── ai/
+│   │   │   ├── gemini.module.ts
+│   │   │   └── gemini.service.ts
 │   │   ├── auth/
 │   │   │   ├── auth.module.ts
 │   │   │   └── strategies/
@@ -578,10 +586,8 @@ nomadai-api/
 │   │   │   └── day-plans.module.ts
 │   │   ├── activities/
 │   │   │   └── activities.module.ts
-│   │   └── ai/                  # (pendiente - paso 8)
-│   │       ├── gemini.module.ts
-│   │       ├── gemini.service.ts
-│   │       └── schemas/
+│   │   └── recommendations/
+│   │       └── recommendations.module.ts
 │   │
 │   ├── presentation/            # ADAPTADOR DE ENTRADA (HTTP)
 │   │   ├── controllers/
@@ -590,22 +596,30 @@ nomadai-api/
 │   │   │   ├── trips.controller.ts
 │   │   │   ├── day-plans.controller.ts
 │   │   │   ├── activities.controller.ts
-│   │   │   └── recommendations.controller.ts  # (pendiente - paso 9)
+│   │   │   └── recommendations.controller.ts
 │   │   ├── guards/
 │   │   │   └── roles.guard.ts
 │   │   ├── decorators/
 │   │   │   └── roles.decorator.ts
-│   │   ├── interceptors/        # (pendiente)
-│   │   └── filters/             # (pendiente)
+│   │   ├── interceptors/        # (fase 2)
+│   │   └── filters/
+│   │       └── domain-exception.filter.ts
 │   │
 │   └── shared/                  # UTILIDADES COMPARTIDAS
+│       ├── ai/                  # Schemas y mappers de respuestas de Gemini
+│       │   ├── flight.schema.ts
+│       │   ├── flight-recommendation.mapper.ts
+│       │   ├── hotel.schema.ts
+│       │   ├── hotel-recommendation.mapper.ts
+│       │   ├── itinerary.schema.ts
+│       │   └── itinerary.mapper.ts
 │       ├── config/
 │       │   └── env.validation.ts
-│       ├── decorators/          # Decoradores compartidos
+│       ├── decorators/
 │       │   └── current-user.decorator.ts
-│       ├── guards/              # Guards compartidos
+│       ├── guards/
 │       │   └── jwt-auth.guard.ts
-│       └── types/               # Tipos compartidos
+│       └── types/
 │           ├── user-payload.ts
 │           └── paginated-response.ts
 │
@@ -627,7 +641,10 @@ nomadai-api/
 │   │   ├── day-plan.factory.ts
 │   │   ├── day-plan-repository.mock.ts
 │   │   ├── activity.factory.ts
-│   │   └── activity-repository.mock.ts
+│   │   ├── activity-repository.mock.ts
+│   │   ├── flight-recommendation-repository.mock.ts
+│   │   ├── hotel-recommendation-repository.mock.ts
+│   │   └── gemini-service.mock.ts
 │   └── jest-e2e.json
 │
 ├── .env                         # Variables de entorno (gitignored)
@@ -676,22 +693,22 @@ Database
 
 ## Plan de Implementación (Orden)
 
-| Paso | Descripción                                                                     | Estado       |
-| ---- | ------------------------------------------------------------------------------- | ------------ |
-| 1    | **Documentación** — Crear docs/ARCHITECTURE.md + AGENTS.md                      | ✅ Hecho     |
-| 2    | **Prisma + DB** — Schema, PrismaService, migración inicial                      | ✅ Hecho     |
-| 2b   | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin                    | ✅ Hecho     |
-| 3    | **Config** — Variables de entorno validadas con Joi                             | ✅ Hecho     |
-| 4    | **Users** — CRUD básico                                                         | ✅ Hecho     |
-| 5    | **Auth** — Register/Login + JWT                                                 | ✅ Hecho     |
-| 5b   | **Swagger** — Documentación API con @nestjs/swagger                             | ✅ Hecho     |
-| 6    | **Trips** — CRUD de viajes + admin management                                   | ✅ Hecho     |
-| 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ✅ Hecho     |
-| 8    | **Gemini Module** — Integración con Google Gemini                               | ⬜ Pendiente |
-| 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ⬜ Pendiente |
-| 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho     |
+| Paso | Descripción                                                                     | Estado   |
+| ---- | ------------------------------------------------------------------------------- | -------- |
+| 1    | **Documentación** — Crear docs/ARCHITECTURE.md + AGENTS.md                      | ✅ Hecho |
+| 2    | **Prisma + DB** — Schema, PrismaService, migración inicial                      | ✅ Hecho |
+| 2b   | **Roles + Seed** — UserRole enum, RolesGuard, seed con admin                    | ✅ Hecho |
+| 3    | **Config** — Variables de entorno validadas con Joi                             | ✅ Hecho |
+| 4    | **Users** — CRUD básico                                                         | ✅ Hecho |
+| 5    | **Auth** — Register/Login + JWT                                                 | ✅ Hecho |
+| 5b   | **Swagger** — Documentación API con @nestjs/swagger                             | ✅ Hecho |
+| 6    | **Trips** — CRUD de viajes + admin management                                   | ✅ Hecho |
+| 7    | **Day Plans + Activities** — Planificación día a día con lat/lng                | ✅ Hecho |
+| 8    | **Gemini Module** — Integración con Google Gemini                               | ✅ Hecho |
+| 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ✅ Hecho |
+| 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho |
 
-### Estado actual (Step 7 completado)
+### Estado actual (Step 9 completado — Backend MVP completo)
 
 **Módulos funcionando:**
 
@@ -712,6 +729,9 @@ Database
 - `POST /trips/:tripId/days/:dayId/activities` — Crear actividad (solo propietario)
 - `PATCH /trips/:tripId/days/:dayId/activities/:activityId` — Actualizar actividad (solo propietario)
 - `DELETE /trips/:tripId/days/:dayId/activities/:activityId` — Eliminar actividad (solo propietario)
+- `POST /trips/:tripId/recommend/flights` — Generar recomendaciones de vuelos con IA
+- `POST /trips/:tripId/recommend/hotels` — Generar recomendaciones de hoteles con IA
+- `POST /trips/:tripId/recommend/itinerary` — Generar itinerario día a día con IA
 
 **Hardening completado:**
 
@@ -724,12 +744,13 @@ Database
 - ✅ Enums de dominio en todas las capas (TripStatus, TravelStyle, UserRole)
 - ✅ Paginación estándar en todos los endpoints de listado
 - ✅ SafeUser como tipo de retorno (sin passwordHash)
+- ✅ DomainExceptionFilter con manejo de errores de dominio
+- ✅ Mappers de dominio para FlightRecommendation y HotelRecommendation
+- ✅ Schemas de Gemini en shared/ai/ (arquitectura hexagonal correcta)
 
 **Swagger UI:** `http://localhost:3000/api`
 
 **Acceso a DB:** `docker exec -it nomadai-postgres psql -U postgres -d nomadai`
-
-### Próximo paso: Gemini Module (Paso 8)
 
 ---
 
@@ -829,11 +850,11 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nomadai?schema=publi
 
 ## Fases Futuras
 
-| Fase       | Funcionalidad                                                                 |
-| ---------- | ----------------------------------------------------------------------------- |
-| **Fase 2** | Leaflet/OpenStreetMap integrado, Streaming SSE, Chat flotante con IA          |
-| **Fase 3** | Duffel API para precios reales de vuelos/hoteles, Favoritos, Compartir viajes |
-| **Fase 4** | Frontend Vue completo, Notificaciones, Modo offline                           |
+| Fase       | Funcionalidad                                                                      |
+| ---------- | ---------------------------------------------------------------------------------- |
+| **Fase 2** | Google OAuth, Leaflet/OpenStreetMap integrado, Streaming SSE, Chat flotante con IA |
+| **Fase 3** | Duffel API para precios reales de vuelos/hoteles, Favoritos, Compartir viajes      |
+| **Fase 4** | Frontend Vue completo, Notificaciones, Modo offline                                |
 
 ---
 
