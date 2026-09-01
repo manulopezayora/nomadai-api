@@ -19,6 +19,7 @@ describe('GeminiService', () => {
   beforeEach(() => {
     configService = {
       get: jest.fn().mockReturnValue('test-api-key'),
+      getOrThrow: jest.fn().mockReturnValue('test-api-key'),
     } as unknown as jest.Mocked<ConfigService>;
 
     service = new GeminiService(configService);

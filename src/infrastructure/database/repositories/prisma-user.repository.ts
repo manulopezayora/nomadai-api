@@ -6,6 +6,7 @@ import {
   UserRepositoryPort,
 } from '../../../domain/ports/repositories/user.repository.port';
 import { User } from '../../../domain/entities/user.entity';
+import { UserRole } from '../../../domain/enums/user-role.enum';
 import { UserMapper } from '../prisma/mappers/user.mapper';
 
 @Injectable()
@@ -41,14 +42,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
 
   async create(data: CreateUserData): Promise<User> {
     const user = await this.prisma.instance.user.create({
-      data: {
-        email: data.email,
-        passwordHash: data.passwordHash,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        provider: data.provider ?? 'local',
-        providerId: data.providerId,
-      },
+      data: UserMapper.toPrismaCreate(data),
     });
     return UserMapper.toDomain(user);
   }
@@ -56,14 +50,14 @@ export class PrismaUserRepository extends UserRepositoryPort {
   async update(id: string, data: UpdateUserData): Promise<User> {
     const user = await this.prisma.instance.user.update({
       where: { id },
-      data,
+      data: UserMapper.toPrismaUpdate(data),
     });
     return UserMapper.toDomain(user);
   }
 
   async countActiveAdmins(): Promise<number> {
     return this.prisma.instance.user.count({
-      where: { role: 'ADMIN', isActive: true },
+      where: { role: UserRole.ADMIN, isActive: true },
     });
   }
 }

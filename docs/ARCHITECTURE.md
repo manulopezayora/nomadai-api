@@ -103,12 +103,16 @@ Frontend (Vue)
 
 ## Diseño de Pantallas (UX/UI Workflow)
 
-| #   | Pantalla                             | Descripción                                                                                                                                          |
-| --- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Onboarding / Generador**           | Input central tipo "prompt" minimalista con tarjetas de sugerencias predefinidas para capturar la intención del viaje                                |
-| 2   | **Dashboard del Itinerario**         | Vista dividida (Split-Screen). A la izquierda, acordeón por días con actividades; a la derecha, mapa interactivo con marcadores y conectores de ruta |
-| 3   | **Módulo de Vuelos + Chat Flotante** | Despliegue de opciones de vuelos integradas junto con un asistente virtual flotante para refinamiento en caliente                                    |
-| 4   | **Vista Colaborativa y Presupuesto** | Trazado completo de la ruta entre ciudades (ej. Tokio → Kioto → Osaka), lista de colaboradores y desglose gráfico de presupuesto                     |
+| #                     | Pantalla                                                                                 | Descripción                                                                                                    | Backend      |
+| --------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1                     | **Login / Registro**                                                                     | Formulario de login con email/contraseña                                                                       | Sin cambios  |
+| 2                     | **Onboarding / Generador**                                                               | Input de prompt en lenguaje natural → `POST /trips/generate`                                                   | Implementado |
+| 3                     | **Dashboard de Viajes**                                                                  | Lista de viajes del usuario con tarjetas de portada (imágenes via Unsplash en frontend)                        | Sin cambios  |
+| 4                     | **Itinerario + Mapa**                                                                    | Vista dividida: timeline de días/actividades + mapa con marcadores. `GET /trips/:id` retorna dayPlans anidados | Enriquecido  |
+| 5                     | **Recomendaciones de Vuelos**                                                            | Tarjetas de vuelos con aerolínea, horarios, precio, escalas. Schema extendido con flightNumber, stops, etc.    | Extendido    |
+| 6                     | **Recomendaciones de Hoteles**                                                           | Tarjetas de hoteles con fotos, precio, rating, barrio. Schema extendido con neighborhood, imageUrl, etc.       | Extendido    |
+| 7 **Detalle del Día** | Timeline de actividades del día con badges de categoría, mapa con ruta, costos estimados | Refactorizado                                                                                                  |
+| 8                     | **Perfil / Settings**                                                                    | Edición de nombre, apellido, foto de perfil. Email read-only.                                                  | Sin cambios  |
 
 ---
 
@@ -169,60 +173,69 @@ Representa el viaje creado por el usuario.
 
 Cada ubicación específica que se renderizará en el mapa.
 
-| Campo       | Tipo                  | Descripción                                                       |
-| ----------- | --------------------- | ----------------------------------------------------------------- |
-| id          | String (cuid)         | PK                                                                |
-| dayPlanId   | String (FK → DayPlan) | Día al que pertenece                                              |
-| title       | String                | Nombre de la actividad                                            |
-| description | String?               | Descripción detallada                                             |
-| location    | String?               | Nombre del lugar                                                  |
-| latitude    | Float?                | Latitud (para Leaflet/OpenStreetMap)                              |
-| longitude   | Float?                | Longitud (para Leaflet/OpenStreetMap)                             |
-| startTime   | String?               | Hora de inicio "09:00"                                            |
-| endTime     | String?               | Hora de fin "12:00"                                               |
-| cost        | Float?                | Costo estimado                                                    |
-| bookingUrl  | String?               | Link externo para reservar                                        |
-| category    | String?               | "museum" \| "restaurant" \| "temple" \| "shopping" \| "transport" |
-| placeId     | String?               | ID genérico de lugar (reemplaza googlePlaceId)                    |
-| order       | Int                   | Orden dentro del día                                              |
-| createdAt   | DateTime              |                                                                   |
-| updatedAt   | DateTime              |                                                                   |
+| Campo       | Tipo                  | Descripción                                                                                                                                      |
+| ----------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| id          | String (cuid)         | PK                                                                                                                                               |
+| dayPlanId   | String (FK → DayPlan) | Día al que pertenece                                                                                                                             |
+| title       | String                | Nombre de la actividad                                                                                                                           |
+| description | String?               | Descripción detallada                                                                                                                            |
+| location    | String?               | Nombre del lugar                                                                                                                                 |
+| latitude    | Float?                | Latitud (para Leaflet/OpenStreetMap)                                                                                                             |
+| longitude   | Float?                | Longitud (para Leaflet/OpenStreetMap)                                                                                                            |
+| startTime   | String?               | Hora de inicio "09:00"                                                                                                                           |
+| endTime     | String?               | Hora de fin "12:00"                                                                                                                              |
+| cost        | Float?                | Costo estimado                                                                                                                                   |
+| bookingUrl  | String?               | Link externo para reservar                                                                                                                       |
+| category    | String?               | "sightseeing" \| "food" \| "culture" \| "adventure" \| "relaxation" \| "shopping" \| "nightlife" \| "transport" \| "stay" \| "flight" \| "other" |
+| placeId     | String?               | ID genérico de lugar (reemplaza googlePlaceId)                                                                                                   |
+| order       | Int                   | Orden dentro del día                                                                                                                             |
+| createdAt   | DateTime              |                                                                                                                                                  |
+| updatedAt   | DateTime              |                                                                                                                                                  |
 
 ### Entidad: FlightRecommendation (Recomendación de Vuelo)
 
-| Campo         | Tipo               | Descripción                        |
-| ------------- | ------------------ | ---------------------------------- |
-| id            | String (cuid)      | PK                                 |
-| tripId        | String (FK → Trip) | Viaje al que pertenece             |
-| airline       | String             | Aerolínea                          |
-| departure     | String             | Aeropuerto de salida               |
-| arrival       | String             | Aeropuerto de llegada              |
-| departureTime | String             | Hora de salida                     |
-| arrivalTime   | String             | Hora de llegada                    |
-| price         | Float?             | Precio estimado                    |
-| currency      | String             | "EUR" (default)                    |
-| bookingUrl    | String?            | Link a Google Flights / Skyscanner |
-| notes         | String?            | Notas                              |
-| isRecommended | Boolean            | Si es la recomendación principal   |
-| createdAt     | DateTime           |                                    |
+| Campo           | Tipo               | Descripción                        |
+| --------------- | ------------------ | ---------------------------------- |
+| id              | String (cuid)      | PK                                 |
+| tripId          | String (FK → Trip) | Viaje al que pertenece             |
+| airline         | String             | Aerolínea                          |
+| flightNumber    | String?            | Número de vuelo (ej. IB3456)       |
+| departure       | String             | Aeropuerto de salida (IATA)        |
+| arrival         | String             | Aeropuerto de llegada (IATA)       |
+| departureDate   | String?            | Fecha de salida (YYYY-MM-DD)       |
+| departureTime   | String             | Hora de salida                     |
+| arrivalTime     | String             | Hora de llegada                    |
+| price           | Float?             | Precio estimado                    |
+| currency        | String             | "EUR" (default)                    |
+| class           | String?            | economy / business / first         |
+| stops           | Int?               | Número de escalas                  |
+| durationMinutes | Int?               | Duración total en minutos          |
+| bookingUrl      | String?            | Link a Google Flights / Skyscanner |
+| notes           | String?            | Notas                              |
+| isRecommended   | Boolean            | Si es la recomendación principal   |
+| createdAt       | DateTime           |                                    |
 
 ### Entidad: HotelRecommendation (Recomendación de Hotel)
 
-| Campo         | Tipo               | Descripción                      |
-| ------------- | ------------------ | -------------------------------- |
-| id            | String (cuid)      | PK                               |
-| tripId        | String (FK → Trip) | Viaje al que pertenece           |
-| name          | String             | Nombre del hotel                 |
-| location      | String             | Ubicación                        |
-| latitude      | Float?             | Latitud                          |
-| longitude     | Float?             | Longitud                         |
-| pricePerNight | Float?             | Precio por noche                 |
-| currency      | String             | "EUR" (default)                  |
-| rating        | Float?             | Valoración                       |
-| amenities     | String[]           | ["wifi", "pool", "breakfast"]    |
-| bookingUrl    | String?            | Link a Booking.com / Hotels.com  |
-| isRecommended | Boolean            | Si es la recomendación principal |
-| createdAt     | DateTime           |                                  |
+| Campo                 | Tipo               | Descripción                      |
+| --------------------- | ------------------ | -------------------------------- |
+| id                    | String (cuid)      | PK                               |
+| tripId                | String (FK → Trip) | Viaje al que pertenece           |
+| name                  | String             | Nombre del hotel                 |
+| location              | String             | Ubicación (ciudad, país)         |
+| neighborhood          | String?            | Barrio o distrito                |
+| latitude              | Float?             | Latitud                          |
+| longitude             | Float?             | Longitud                         |
+| pricePerNight         | Float?             | Precio por noche (con descuento) |
+| originalPricePerNight | Float?             | Precio original sin descuento    |
+| currency              | String             | "EUR" (default)                  |
+| rating                | Float?             | Valoración (1-5)                 |
+| reviewCount           | Int?               | Número de reviews                |
+| amenities             | String[]           | ["wifi", "pool", "breakfast"]    |
+| imageUrl              | String?            | URL de foto del hotel            |
+| bookingUrl            | String?            | Link a Booking.com / Hotels.com  |
+| isRecommended         | Boolean            | Si es la recomendación principal |
+| createdAt             | DateTime           |                                  |
 
 ---
 
@@ -255,14 +268,15 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ### Trips
 
-| Método | Ruta               | Descripción                             | Auth  |
-| ------ | ------------------ | --------------------------------------- | ----- |
-| POST   | `/trips`           | Crear viaje                             | Sí    |
-| GET    | `/trips`           | Listar viajes del usuario (paginado)    | Sí    |
-| GET    | `/trips/admin/all` | Listar todos los viajes (solo ADMIN)    | ADMIN |
-| GET    | `/trips/:id`       | Detalle de viaje con días y actividades | Sí    |
-| PATCH  | `/trips/:id`       | Actualizar viaje                        | Sí    |
-| DELETE | `/trips/:id`       | Eliminar viaje (cascade)                | Sí    |
+| Método | Ruta               | Descripción                                         | Auth  |
+| ------ | ------------------ | --------------------------------------------------- | ----- |
+| POST   | `/trips`           | Crear viaje                                         | Sí    |
+| POST   | `/trips/generate`  | Generar viaje desde prompt en lenguaje natural (IA) | Sí    |
+| GET    | `/trips`           | Listar viajes del usuario (paginado)                | Sí    |
+| GET    | `/trips/admin/all` | Listar todos los viajes (solo ADMIN)                | ADMIN |
+| GET    | `/trips/:id`       | Detalle de viaje con días y actividades             | Sí    |
+| PATCH  | `/trips/:id`       | Actualizar viaje                                    | Sí    |
+| DELETE | `/trips/:id`       | Eliminar viaje (cascade)                            | Sí    |
 
 ### Day Plans
 
@@ -399,12 +413,13 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 ```
 1. POST /auth/register  →  Cuenta creada
 2. POST /auth/login     →  JWT en body
-3. POST /trips           →  { destination: "Japón", startDate: "2026-04-01", ... }
+3. POST /trips/generate  →  { prompt: "10 días en Japón, cultura y relax" }
+   → Gemini parsea el prompt y crea el viaje con título, destino, fechas, preferencias
 4. POST /trips/:id/recommend/flights    →  Gemini genera opciones de vuelos
 5. POST /trips/:id/recommend/hotels     →  Gemini genera opciones de hoteles
 6. POST /trips/:id/recommend/itinerary  →  Gemini genera plan completo
    → Se guardan: DayPlan[] con Activity[] dentro (con lat/lng)
-7. GET /trips/:id        →  Ver plan completo con todos los días
+7. GET /trips/:id        →  Ver plan completo con todos los días (dayPlans + activities anidadas)
 8. PATCH/DELETE          →  Modificar según preferencias
 ```
 
@@ -520,7 +535,8 @@ nomadai-api/
 │   │   │   │   ├── list-users.use-case.ts
 │   │   │   │   └── update-user.use-case.ts
 │   │   │   ├── trips/
-│   │   │   │   ├── create-trip.use-case.ts
+│   │       │   │       ├── generate-trip.use-case.ts
+│       │   │       ├── create-trip.use-case.ts
 │   │   │   │   ├── get-trip.use-case.ts
 │   │   │   │   ├── list-trips.use-case.ts
 │   │   │   │   ├── list-all-trips.use-case.ts
@@ -544,6 +560,7 @@ nomadai-api/
 │   │       ├── safe-user.dto.ts
 │   │       ├── update-user.dto.ts
 │   │       ├── create-trip.dto.ts
+│   │       ├── generate-trip.dto.ts
 │   │       ├── update-trip.dto.ts
 │   │       ├── pagination.dto.ts
 │   │       ├── create-day-plan.dto.ts
@@ -562,7 +579,9 @@ nomadai-api/
 │   │   │   │       ├── user.mapper.ts
 │   │   │   │       ├── trip.mapper.ts
 │   │   │   │       ├── day-plan.mapper.ts
-│   │   │   │       └── activity.mapper.ts
+│   │   │   │       ├── activity.mapper.ts
+│   │   │   │       ├── flight-recommendation.mapper.ts
+│   │   │   │       └── hotel-recommendation.mapper.ts
 │   │   │   └── repositories/
 │   │   │       ├── prisma-user.repository.ts
 │   │   │       ├── prisma-trip.repository.ts
@@ -612,7 +631,9 @@ nomadai-api/
 │       │   ├── hotel.schema.ts
 │       │   ├── hotel-recommendation.mapper.ts
 │       │   ├── itinerary.schema.ts
-│       │   └── itinerary.mapper.ts
+│       │   ├── itinerary.mapper.ts
+│       │   ├── trip-prompt.schema.ts
+│       │   └── trip-prompt.mapper.ts
 │       ├── config/
 │       │   └── env.validation.ts
 │       ├── decorators/
@@ -635,7 +656,6 @@ nomadai-api/
 │   │   ├── user.factory.ts
 │   │   ├── user-repository.mock.ts
 │   │   ├── jwt-service.mock.ts
-│   │   ├── reflector.mock.ts
 │   │   ├── trip.factory.ts
 │   │   ├── trip-repository.mock.ts
 │   │   ├── day-plan.factory.ts
@@ -708,7 +728,7 @@ Database
 | 9    | **Recommendations** — Endpoints de recomendación (vuelos, hoteles, itinerario)  | ✅ Hecho |
 | 10   | **Hardening** — Rate limiting, filtros de excepción, validación manual, mappers | ✅ Hecho |
 
-### Estado actual (Step 9 completado — Backend MVP completo)
+### Estado actual (Backend MVP + Adaptación para Frontend completada)
 
 **Módulos funcionando:**
 
@@ -718,9 +738,10 @@ Database
 - `GET /users` — Listar usuarios (solo ADMIN, paginado)
 - `PATCH /users/:id` — Actualizar perfil (propio o admin, con reglas de negocio)
 - `POST /trips` — Crear viaje
+- `POST /trips/generate` — Generar viaje desde prompt en lenguaje natural con Gemini
 - `GET /trips` — Listar viajes del usuario (paginado)
 - `GET /trips/admin/all` — Listar todos los viajes (solo ADMIN, paginado)
-- `GET /trips/:id` — Detalle de viaje (solo propietario o admin)
+- `GET /trips/:id` — Detalle de viaje con dayPlans y activities anidadas (solo propietario o admin)
 - `PATCH /trips/:id` — Actualizar viaje (solo propietario o admin, admin bypass total)
 - `DELETE /trips/:id` — Eliminar viaje con cascade (solo propietario o admin)
 - `POST /trips/:tripId/days` — Crear día de itinerario (solo propietario)
@@ -729,8 +750,8 @@ Database
 - `POST /trips/:tripId/days/:dayId/activities` — Crear actividad (solo propietario)
 - `PATCH /trips/:tripId/days/:dayId/activities/:activityId` — Actualizar actividad (solo propietario)
 - `DELETE /trips/:tripId/days/:dayId/activities/:activityId` — Eliminar actividad (solo propietario)
-- `POST /trips/:tripId/recommend/flights` — Generar recomendaciones de vuelos con IA
-- `POST /trips/:tripId/recommend/hotels` — Generar recomendaciones de hoteles con IA
+- `POST /trips/:tripId/recommend/flights` — Generar recomendaciones de vuelos con IA (schema extendido)
+- `POST /trips/:tripId/recommend/hotels` — Generar recomendaciones de hoteles con IA (schema extendido)
 - `POST /trips/:tripId/recommend/itinerary` — Generar itinerario día a día con IA
 
 **Hardening completado:**
