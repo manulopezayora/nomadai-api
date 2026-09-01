@@ -6,6 +6,7 @@ import {
   UserRepositoryPort,
 } from '../../../domain/ports/repositories/user.repository.port';
 import { User } from '../../../domain/entities/user.entity';
+import { UserRole } from '../../../domain/enums/user-role.enum';
 import { UserMapper } from '../prisma/mappers/user.mapper';
 
 @Injectable()
@@ -63,7 +64,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
 
   async countActiveAdmins(): Promise<number> {
     return this.prisma.instance.user.count({
-      where: { role: 'ADMIN', isActive: true },
+      where: { role: UserRole.ADMIN, isActive: true },
     });
   }
 }
