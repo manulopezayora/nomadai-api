@@ -5,6 +5,7 @@ import {
   HotelRecommendationRepositoryPort,
 } from '../../../domain/ports/repositories/hotel-recommendation.repository.port';
 import { HotelRecommendation } from '../../../domain/entities/hotel-recommendation.entity';
+import { HotelRecommendationMapper } from '../prisma/mappers/hotel-recommendation.mapper';
 
 @Injectable()
 export class PrismaHotelRecommendationRepository extends HotelRecommendationRepositoryPort {
@@ -17,25 +18,7 @@ export class PrismaHotelRecommendationRepository extends HotelRecommendationRepo
       where: { tripId },
       orderBy: { createdAt: 'desc' },
     });
-    return results.map((r) => ({
-      id: r.id,
-      tripId: r.tripId,
-      name: r.name,
-      location: r.location,
-      neighborhood: r.neighborhood,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      pricePerNight: r.pricePerNight,
-      originalPricePerNight: r.originalPricePerNight,
-      currency: r.currency,
-      rating: r.rating,
-      reviewCount: r.reviewCount,
-      amenities: r.amenities,
-      imageUrl: r.imageUrl,
-      bookingUrl: r.bookingUrl,
-      isRecommended: r.isRecommended,
-      createdAt: r.createdAt,
-    }));
+    return results.map((r) => HotelRecommendationMapper.toDomain(r));
   }
 
   async createMany(
@@ -47,23 +30,9 @@ export class PrismaHotelRecommendationRepository extends HotelRecommendationRepo
     });
 
     await this.prisma.instance.hotelRecommendation.createMany({
-      data: data.map((d) => ({
-        tripId,
-        name: d.name,
-        location: d.location,
-        neighborhood: d.neighborhood,
-        latitude: d.latitude,
-        longitude: d.longitude,
-        pricePerNight: d.pricePerNight,
-        originalPricePerNight: d.originalPricePerNight,
-        currency: d.currency,
-        rating: d.rating,
-        reviewCount: d.reviewCount,
-        amenities: d.amenities,
-        imageUrl: d.imageUrl,
-        bookingUrl: d.bookingUrl,
-        isRecommended: d.isRecommended,
-      })),
+      data: data.map((d) =>
+        HotelRecommendationMapper.toPrismaCreate(tripId, d),
+      ),
     });
 
     return this.findByTripId(tripId);

@@ -5,6 +5,7 @@ import {
   FlightRecommendationRepositoryPort,
 } from '../../../domain/ports/repositories/flight-recommendation.repository.port';
 import { FlightRecommendation } from '../../../domain/entities/flight-recommendation.entity';
+import { FlightRecommendationMapper } from '../prisma/mappers/flight-recommendation.mapper';
 
 @Injectable()
 export class PrismaFlightRecommendationRepository extends FlightRecommendationRepositoryPort {
@@ -17,26 +18,7 @@ export class PrismaFlightRecommendationRepository extends FlightRecommendationRe
       where: { tripId },
       orderBy: { createdAt: 'desc' },
     });
-    return results.map((r) => ({
-      id: r.id,
-      tripId: r.tripId,
-      airline: r.airline,
-      flightNumber: r.flightNumber,
-      departure: r.departure,
-      arrival: r.arrival,
-      departureDate: r.departureDate,
-      departureTime: r.departureTime,
-      arrivalTime: r.arrivalTime,
-      price: r.price,
-      currency: r.currency,
-      class: r.class,
-      stops: r.stops,
-      durationMinutes: r.durationMinutes,
-      bookingUrl: r.bookingUrl,
-      notes: r.notes,
-      isRecommended: r.isRecommended,
-      createdAt: r.createdAt,
-    }));
+    return results.map((r) => FlightRecommendationMapper.toDomain(r));
   }
 
   async createMany(
@@ -48,24 +30,9 @@ export class PrismaFlightRecommendationRepository extends FlightRecommendationRe
     });
 
     await this.prisma.instance.flightRecommendation.createMany({
-      data: data.map((d) => ({
-        tripId,
-        airline: d.airline,
-        flightNumber: d.flightNumber,
-        departure: d.departure,
-        arrival: d.arrival,
-        departureDate: d.departureDate,
-        departureTime: d.departureTime,
-        arrivalTime: d.arrivalTime,
-        price: d.price,
-        currency: d.currency,
-        class: d.class,
-        stops: d.stops,
-        durationMinutes: d.durationMinutes,
-        bookingUrl: d.bookingUrl,
-        notes: d.notes,
-        isRecommended: d.isRecommended,
-      })),
+      data: data.map((d) =>
+        FlightRecommendationMapper.toPrismaCreate(tripId, d),
+      ),
     });
 
     return this.findByTripId(tripId);
