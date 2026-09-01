@@ -11,7 +11,6 @@ Users describe their trip in natural language (e.g. _"10 days in Japan, culture 
 - **Language**: TypeScript 5.7 (strict mode)
 - **Database**: PostgreSQL 16 via Prisma 7
 - **AI**: Google Gemini (`@google/genai`)
-- **Maps**: Leaflet / OpenStreetMap (free, no API key)
 - **Auth**: Passport.js (Local + JWT)
 - **Architecture**: Hexagonal (Ports & Adapters)
 - **Package manager**: pnpm
