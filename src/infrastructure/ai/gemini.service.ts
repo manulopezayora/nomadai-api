@@ -15,7 +15,7 @@ export class GeminiService extends GeminiPort implements OnModuleInit {
   }
 
   onModuleInit(): void {
-    const apiKey = this.config.get<string>('GEMINI_API_KEY');
+    const apiKey = this.config.getOrThrow<string>('GEMINI_API_KEY');
     this.ai = new GoogleGenAI({ apiKey });
     this.logger.log('GeminiService initialized');
   }
