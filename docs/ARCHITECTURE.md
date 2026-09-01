@@ -579,7 +579,9 @@ nomadai-api/
 │   │   │   │       ├── user.mapper.ts
 │   │   │   │       ├── trip.mapper.ts
 │   │   │   │       ├── day-plan.mapper.ts
-│   │   │   │       └── activity.mapper.ts
+│   │   │   │       ├── activity.mapper.ts
+│   │   │   │       ├── flight-recommendation.mapper.ts
+│   │   │   │       └── hotel-recommendation.mapper.ts
 │   │   │   └── repositories/
 │   │   │       ├── prisma-user.repository.ts
 │   │   │       ├── prisma-trip.repository.ts
@@ -654,7 +656,6 @@ nomadai-api/
 │   │   ├── user.factory.ts
 │   │   ├── user-repository.mock.ts
 │   │   ├── jwt-service.mock.ts
-│   │   ├── reflector.mock.ts
 │   │   ├── trip.factory.ts
 │   │   ├── trip-repository.mock.ts
 │   │   ├── day-plan.factory.ts
