@@ -15,7 +15,7 @@ Users describe their trip in natural language (e.g. _"10 days in Japan, culture 
 - **Auth**: Passport.js (Local + JWT)
 - **Architecture**: Hexagonal (Ports & Adapters)
 - **Package manager**: pnpm
-- **Tests**: 200 unit tests (Jest)
+- **Tests**: 206 unit tests (Jest)
 
 ## Getting Started
 
@@ -106,14 +106,14 @@ Swagger UI available at `http://localhost:3000/api` when the server is running.
 
 ### Key Endpoints
 
-| Module              | Endpoints                                                        |
-| ------------------- | ---------------------------------------------------------------- |
-| **Auth**            | `POST /auth/register`, `POST /auth/login`, `GET /auth/profile`   |
-| **Users**           | `GET /users`, `PATCH /users/:id`                                 |
-| **Trips**           | CRUD + `GET /trips/admin/all`                                    |
-| **Day Plans**       | CRUD nested under `/trips/:tripId/days`                          |
-| **Activities**      | CRUD nested under `/trips/:tripId/days/:dayId/activities`        |
-| **Recommendations** | `POST /trips/:tripId/recommend/flights`, `/hotels`, `/itinerary` |
+| Module              | Endpoints                                                            |
+| ------------------- | -------------------------------------------------------------------- |
+| **Auth**            | `POST /auth/register`, `POST /auth/login`, `GET /auth/profile`       |
+| **Users**           | `GET /users`, `PATCH /users/:id`                                     |
+| **Trips**           | `POST /trips`, `POST /trips/generate`, CRUD + `GET /trips/admin/all` |
+| **Day Plans**       | CRUD nested under `/trips/:tripId/days`                              |
+| **Activities**      | CRUD nested under `/trips/:tripId/days/:dayId/activities`            |
+| **Recommendations** | `POST /trips/:tripId/recommend/flights`, `/hotels`, `/itinerary`     |
 
 ## Architecture
 
