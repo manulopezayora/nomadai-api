@@ -42,14 +42,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
 
   async create(data: CreateUserData): Promise<User> {
     const user = await this.prisma.instance.user.create({
-      data: {
-        email: data.email,
-        passwordHash: data.passwordHash,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        provider: data.provider ?? 'local',
-        providerId: data.providerId,
-      },
+      data: UserMapper.toPrismaCreate(data),
     });
     return UserMapper.toDomain(user);
   }
@@ -57,7 +50,7 @@ export class PrismaUserRepository extends UserRepositoryPort {
   async update(id: string, data: UpdateUserData): Promise<User> {
     const user = await this.prisma.instance.user.update({
       where: { id },
-      data,
+      data: UserMapper.toPrismaUpdate(data),
     });
     return UserMapper.toDomain(user);
   }
