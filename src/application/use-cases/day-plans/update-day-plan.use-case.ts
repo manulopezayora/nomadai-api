@@ -30,6 +30,7 @@ export class UpdateDayPlanUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only update days for your own trips',
       );
     }
@@ -41,7 +42,10 @@ export class UpdateDayPlanUseCase {
     }
 
     if (dayPlan.tripId !== tripId) {
-      throw new ForbiddenException('Day plan does not belong to this trip');
+      throw new ForbiddenException(
+        'DAY_PLAN_FORBIDDEN',
+        'Day plan does not belong to this trip',
+      );
     }
 
     if (dto.dayNumber !== undefined && dto.dayNumber !== dayPlan.dayNumber) {
@@ -52,6 +56,7 @@ export class UpdateDayPlanUseCase {
 
       if (existing) {
         throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
           `Day ${dto.dayNumber} already exists for this trip`,
         );
       }
@@ -61,11 +66,15 @@ export class UpdateDayPlanUseCase {
       const date = new Date(dto.date);
 
       if (isNaN(date.getTime())) {
-        throw new ValidationException('Invalid date format');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'Invalid date format',
+        );
       }
 
       if (date < trip.startDate || date > trip.endDate) {
         throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
           `Date must be between trip start (${trip.startDate.toISOString().split('T')[0]}) and end (${trip.endDate.toISOString().split('T')[0]})`,
         );
       }

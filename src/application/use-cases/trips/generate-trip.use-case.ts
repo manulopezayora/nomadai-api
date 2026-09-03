@@ -24,6 +24,7 @@ export class GenerateTripUseCase {
   async execute(dto: GenerateTripDto, userId: string): Promise<Trip> {
     if (!dto.prompt || dto.prompt.trim().length < 10) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         'Prompt must be at least 10 characters long',
       );
     }
@@ -41,12 +42,14 @@ export class GenerateTripUseCase {
 
     if (!mapped.title || !mapped.destination) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         'Could not extract destination from prompt. Please be more specific.',
       );
     }
 
     if (mapped.endDate <= mapped.startDate) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         'Could not determine valid dates from prompt. Please specify dates.',
       );
     }

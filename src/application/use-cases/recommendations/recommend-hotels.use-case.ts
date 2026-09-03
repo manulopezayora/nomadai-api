@@ -36,16 +36,21 @@ export class RecommendHotelsUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only generate recommendations for your own trips',
       );
     }
 
     if (!dto.city) {
-      throw new ValidationException('City is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'City is required',
+      );
     }
 
     if (!dto.checkIn || !dto.checkOut) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         'Check-in and check-out dates are required',
       );
     }

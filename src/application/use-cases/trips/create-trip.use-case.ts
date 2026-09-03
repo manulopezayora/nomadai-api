@@ -14,38 +14,62 @@ export class CreateTripUseCase {
 
   async execute(dto: CreateTripDto, userId: string): Promise<Trip> {
     if (!dto.title || dto.title.trim().length === 0) {
-      throw new ValidationException('Title is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Title is required',
+      );
     }
 
     if (!dto.destination || dto.destination.trim().length === 0) {
-      throw new ValidationException('Destination is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Destination is required',
+      );
     }
 
     if (!dto.startDate) {
-      throw new ValidationException('Start date is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Start date is required',
+      );
     }
 
     if (!dto.endDate) {
-      throw new ValidationException('End date is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'End date is required',
+      );
     }
 
     if (!dto.interests || dto.interests.length === 0) {
-      throw new ValidationException('At least one interest is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'At least one interest is required',
+      );
     }
 
     const startDate = new Date(dto.startDate);
     const endDate = new Date(dto.endDate);
 
     if (isNaN(startDate.getTime())) {
-      throw new ValidationException('Invalid start date format');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Invalid start date format',
+      );
     }
 
     if (isNaN(endDate.getTime())) {
-      throw new ValidationException('Invalid end date format');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Invalid end date format',
+      );
     }
 
     if (endDate <= startDate) {
-      throw new ValidationException('End date must be after start date');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'End date must be after start date',
+      );
     }
 
     return this.tripRepository.create({

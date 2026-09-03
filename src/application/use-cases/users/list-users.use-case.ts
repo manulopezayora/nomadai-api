@@ -1,8 +1,9 @@
-import { Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repository.port';
 import { User } from '../../../domain/entities/user.entity';
 import { SafeUser, toSafeUser } from '../../dto/safe-user.dto';
 import { PaginatedResponse } from '../../../shared/types/paginated-response';
+import { ValidationException } from '../../../domain/exceptions/validation.exception';
 
 @Injectable()
 export class ListUsersUseCase {
@@ -16,10 +17,16 @@ export class ListUsersUseCase {
     limit: number = 20,
   ): Promise<PaginatedResponse<SafeUser>> {
     if (page < 1) {
-      throw new BadRequestException('Page must be at least 1');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Page must be at least 1',
+      );
     }
     if (limit < 1 || limit > 100) {
-      throw new BadRequestException('Limit must be between 1 and 100');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Limit must be between 1 and 100',
+      );
     }
 
     const offset = (page - 1) * limit;

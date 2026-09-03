@@ -17,6 +17,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
     if (exception instanceof DomainException) {
       response.status(exception.statusCode).json({
         statusCode: exception.statusCode,
+        code: exception.code,
         message: exception.message,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -35,6 +36,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
       response.status(status).json({
         statusCode: status,
+        code: `HTTP_${status}`,
         message: Array.isArray(message) ? message[0] : message,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -44,6 +46,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
     response.status(500).json({
       statusCode: 500,
+      code: 'INTERNAL_ERROR',
       message: 'Internal server error',
       timestamp: new Date().toISOString(),
       path: request.url,

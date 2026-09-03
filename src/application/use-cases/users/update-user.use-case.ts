@@ -29,7 +29,10 @@ export class UpdateUserUseCase {
     const isAdmin = currentUser.role === UserRole.ADMIN;
 
     if (!isOwnProfile && !isAdmin) {
-      throw new ForbiddenException('You can only update your own profile');
+      throw new ForbiddenException(
+        'USER_FORBIDDEN',
+        'You can only update your own profile',
+      );
     }
 
     const wantsToChangeRole = dto.role !== undefined;
@@ -37,11 +40,15 @@ export class UpdateUserUseCase {
 
     if (wantsToChangeRole || wantsToChangeActive) {
       if (!isAdmin) {
-        throw new ForbiddenException('Only admins can change role or isActive');
+        throw new ForbiddenException(
+          'USER_FORBIDDEN_ROLE_CHANGE',
+          'Only admins can change role or isActive',
+        );
       }
 
       if (isOwnProfile) {
         throw new ForbiddenException(
+          'USER_FORBIDDEN_ROLE_CHANGE',
           'Admins cannot change their own role or isActive',
         );
       }
@@ -55,6 +62,7 @@ export class UpdateUserUseCase {
 
           if (activeAdminCount <= 1) {
             throw new ValidationException(
+              'VALIDATION_INVALID_PARAMS',
               'Cannot deactivate the last active admin',
             );
           }

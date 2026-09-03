@@ -42,6 +42,7 @@ export class RecommendItineraryUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only generate itineraries for your own trips',
       );
     }

@@ -26,6 +26,7 @@ export class DeleteDayPlanUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only delete days for your own trips',
       );
     }
@@ -37,7 +38,10 @@ export class DeleteDayPlanUseCase {
     }
 
     if (dayPlan.tripId !== tripId) {
-      throw new ForbiddenException('Day plan does not belong to this trip');
+      throw new ForbiddenException(
+        'DAY_PLAN_FORBIDDEN',
+        'Day plan does not belong to this trip',
+      );
     }
 
     await this.dayPlanRepository.delete(dayPlanId);

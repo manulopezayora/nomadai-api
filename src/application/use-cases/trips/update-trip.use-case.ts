@@ -59,7 +59,10 @@ export class UpdateTripUseCase {
     const isOwner = existing.userId === currentUser.userId;
 
     if (!isAdmin && !isOwner) {
-      throw new TripNotFoundException(tripId);
+      throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
+        'You do not have permission to update this trip',
+      );
     }
 
     if (
@@ -71,6 +74,7 @@ export class UpdateTripUseCase {
 
       if (!allowed.includes(dto.status)) {
         throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
           `Cannot change status from '${existing.status}' to '${dto.status}'`,
         );
       }
@@ -87,6 +91,7 @@ export class UpdateTripUseCase {
 
       if (forbiddenFields.length > 0) {
         throw new ForbiddenException(
+          'TRIP_FORBIDDEN',
           `Cannot edit fields [${forbiddenFields.join(', ')}] on a '${existing.status}' trip`,
         );
       }
@@ -96,14 +101,20 @@ export class UpdateTripUseCase {
 
     if (dto.title !== undefined) {
       if (dto.title.trim().length === 0) {
-        throw new ValidationException('Title cannot be empty');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'Title cannot be empty',
+        );
       }
       updateData.title = dto.title.trim();
     }
 
     if (dto.destination !== undefined) {
       if (dto.destination.trim().length === 0) {
-        throw new ValidationException('Destination cannot be empty');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'Destination cannot be empty',
+        );
       }
       updateData.destination = dto.destination.trim();
     }
@@ -111,7 +122,10 @@ export class UpdateTripUseCase {
     if (dto.startDate !== undefined) {
       const startDate = new Date(dto.startDate);
       if (isNaN(startDate.getTime())) {
-        throw new ValidationException('Invalid start date format');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'Invalid start date format',
+        );
       }
       updateData.startDate = startDate;
     }
@@ -119,7 +133,10 @@ export class UpdateTripUseCase {
     if (dto.endDate !== undefined) {
       const endDate = new Date(dto.endDate);
       if (isNaN(endDate.getTime())) {
-        throw new ValidationException('Invalid end date format');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'Invalid end date format',
+        );
       }
       updateData.endDate = endDate;
     }
@@ -134,7 +151,10 @@ export class UpdateTripUseCase {
 
     if (dto.interests !== undefined) {
       if (dto.interests.length === 0) {
-        throw new ValidationException('At least one interest is required');
+        throw new ValidationException(
+          'VALIDATION_INVALID_PARAMS',
+          'At least one interest is required',
+        );
       }
       updateData.preferences = {
         interests: dto.interests,
@@ -155,7 +175,10 @@ export class UpdateTripUseCase {
     const finalEndDate = (updateData.endDate as Date) ?? existing.endDate;
 
     if (finalEndDate <= finalStartDate) {
-      throw new ValidationException('End date must be after start date');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'End date must be after start date',
+      );
     }
 
     return this.tripRepository.update(tripId, updateData);

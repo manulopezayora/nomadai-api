@@ -304,6 +304,79 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ---
 
+## Error Codes (API Responses)
+
+Todas las excepciones de dominio incluyen un campo `code` en la respuesta JSON para permitir **i18n en el frontend**. El frontend puede usar estos códigos con `vue-i18n` para mostrar mensajes traducidos.
+
+### Formato de respuesta de error
+
+```json
+{
+  "statusCode": 401,
+  "code": "AUTH_INVALID_CREDENTIALS",
+  "message": "Invalid credentials",
+  "timestamp": "2026-09-03T14:44:14.085Z",
+  "path": "/api/auth/login"
+}
+```
+
+### Códigos de error
+
+| Code                            | HTTP | Descripción                             |
+| ------------------------------- | ---- | --------------------------------------- |
+| `AUTH_INVALID_CREDENTIALS`      | 401  | Email o contraseña incorrectos          |
+| `AUTH_ACCOUNT_DISABLED`         | 401  | Cuenta desactivada                      |
+| `AUTH_EMAIL_ALREADY_REGISTERED` | 409  | Email ya registrado                     |
+| `VALIDATION_INVALID_EMAIL`      | 400  | Formato de email inválido               |
+| `VALIDATION_PASSWORD_REQUIRED`  | 400  | Contraseña requerida                    |
+| `VALIDATION_INVALID_PARAMS`     | 400  | Parámetros de entrada inválidos         |
+| `TRIP_NOT_FOUND`                | 404  | Viaje no encontrado                     |
+| `TRIP_FORBIDDEN`                | 403  | No tienes permiso para este viaje       |
+| `DAY_PLAN_NOT_FOUND`            | 404  | Plan de día no encontrado               |
+| `DAY_PLAN_FORBIDDEN`            | 403  | Plan de día no pertenece al viaje       |
+| `ACTIVITY_NOT_FOUND`            | 404  | Actividad no encontrada                 |
+| `ACTIVITY_FORBIDDEN`            | 403  | Actividad no pertenece al plan de día   |
+| `USER_NOT_FOUND`                | 404  | Usuario no encontrado                   |
+| `USER_FORBIDDEN`                | 403  | Solo puedes editar tu propio perfil     |
+| `USER_FORBIDDEN_ROLE_CHANGE`    | 403  | Solo admins pueden cambiar rol/isActive |
+| `INTERNAL_ERROR`                | 500  | Error interno del servidor              |
+
+### Uso en el frontend (vue-i18n)
+
+```typescript
+// locales/es.json
+{
+  "errors": {
+    "AUTH_INVALID_CREDENTIALS": "Credenciales inválidas",
+    "TRIP_NOT_FOUND": "Viaje no encontrado",
+    "TRIP_FORBIDDEN": "No tienes permiso para este viaje"
+  }
+}
+
+// locales/en.json
+{
+  "errors": {
+    "AUTH_INVALID_CREDENTIALS": "Invalid credentials",
+    "TRIP_NOT_FOUND": "Trip not found",
+    "TRIP_FORBIDDEN": "You don't have permission for this trip"
+  }
+}
+
+// ErrorHandler.ts
+if (error.response?.data?.code) {
+  message = t(`errors.${error.response.data.code}`)
+}
+```
+
+### Reglas para nuevos endpoints
+
+1. Usar `code` descriptivo en formato `ENTITY_ACTION` (ej: `TRIP_NOT_FOUND`)
+2. Siempre incluir `message` en inglés como fallback/debug
+3. Los códigos son inmutables una vez creados (el frontend depende de ellos)
+4. Para nuevos dominios, seguir el patrón: `{ENTITY}_NOT_FOUND`, `{ENTITY}_FORBIDDEN`, `{ENTITY}_VALIDATION`
+
+---
+
 ## Reglas de Negocio — User Management
 
 ### Permisos de edición

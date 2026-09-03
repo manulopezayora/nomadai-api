@@ -28,21 +28,33 @@ export class LoginUseCase {
 
   async execute(dto: LoginDto): Promise<LoginResult> {
     if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
-      throw new ValidationException('Invalid email format');
+      throw new ValidationException(
+        'VALIDATION_INVALID_EMAIL',
+        'Invalid email format',
+      );
     }
 
     if (!dto.password) {
-      throw new ValidationException('Password is required');
+      throw new ValidationException(
+        'VALIDATION_PASSWORD_REQUIRED',
+        'Password is required',
+      );
     }
 
     const user = await this.userRepository.findByEmail(dto.email);
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'AUTH_INVALID_CREDENTIALS',
+        'Invalid credentials',
+      );
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is disabled');
+      throw new UnauthorizedException(
+        'AUTH_ACCOUNT_DISABLED',
+        'Account is disabled',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -51,7 +63,10 @@ export class LoginUseCase {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'AUTH_INVALID_CREDENTIALS',
+        'Invalid credentials',
+      );
     }
 
     const payload = {

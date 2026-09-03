@@ -29,22 +29,30 @@ export class CreateDayPlanUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only create days for your own trips',
       );
     }
 
     if (!dto.date) {
-      throw new ValidationException('Date is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Date is required',
+      );
     }
 
     const date = new Date(dto.date);
 
     if (isNaN(date.getTime())) {
-      throw new ValidationException('Invalid date format');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Invalid date format',
+      );
     }
 
     if (date < trip.startDate || date > trip.endDate) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         `Date must be between trip start (${trip.startDate.toISOString().split('T')[0]}) and end (${trip.endDate.toISOString().split('T')[0]})`,
       );
     }
@@ -56,6 +64,7 @@ export class CreateDayPlanUseCase {
 
     if (existing) {
       throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
         `Day ${dto.dayNumber} already exists for this trip`,
       );
     }

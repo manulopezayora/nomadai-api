@@ -15,17 +15,26 @@ export class RegisterUseCase {
 
   async execute(dto: RegisterDto): Promise<SafeUser> {
     if (!dto.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
-      throw new ValidationException('Invalid email format');
+      throw new ValidationException(
+        'VALIDATION_INVALID_EMAIL',
+        'Invalid email format',
+      );
     }
 
     if (!dto.password || dto.password.length < 8) {
-      throw new ValidationException('Password must be at least 8 characters');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Password must be at least 8 characters',
+      );
     }
 
     const existingUser = await this.userRepository.findByEmail(dto.email);
 
     if (existingUser) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException(
+        'AUTH_EMAIL_ALREADY_REGISTERED',
+        'Email already registered',
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);

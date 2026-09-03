@@ -30,6 +30,7 @@ export class DeleteActivityUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only delete activities from your own trips',
       );
     }
@@ -41,7 +42,10 @@ export class DeleteActivityUseCase {
     }
 
     if (dayPlan.tripId !== tripId) {
-      throw new ForbiddenException('Day plan does not belong to this trip');
+      throw new ForbiddenException(
+        'DAY_PLAN_FORBIDDEN',
+        'Day plan does not belong to this trip',
+      );
     }
 
     const activity = await this.activityRepository.findById(activityId);
@@ -51,7 +55,10 @@ export class DeleteActivityUseCase {
     }
 
     if (activity.dayPlanId !== dayPlanId) {
-      throw new ForbiddenException('Activity does not belong to this day plan');
+      throw new ForbiddenException(
+        'ACTIVITY_FORBIDDEN',
+        'Activity does not belong to this day plan',
+      );
     }
 
     await this.activityRepository.delete(activityId);

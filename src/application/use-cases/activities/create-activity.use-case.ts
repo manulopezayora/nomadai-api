@@ -33,6 +33,7 @@ export class CreateActivityUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only add activities to your own trips',
       );
     }
@@ -44,11 +45,17 @@ export class CreateActivityUseCase {
     }
 
     if (dayPlan.tripId !== tripId) {
-      throw new ForbiddenException('Day plan does not belong to this trip');
+      throw new ForbiddenException(
+        'DAY_PLAN_FORBIDDEN',
+        'Day plan does not belong to this trip',
+      );
     }
 
     if (!dto.title || dto.title.trim().length === 0) {
-      throw new ValidationException('Activity title is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Activity title is required',
+      );
     }
 
     return this.activityRepository.create({

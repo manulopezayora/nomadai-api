@@ -28,13 +28,13 @@ describe('UpdateTripUseCase', () => {
     ).rejects.toThrow(TripNotFoundException);
   });
 
-  it('should throw TripNotFoundException when user does not own trip', async () => {
+  it('should throw ForbiddenException when user does not own trip', async () => {
     const trip = createMockTrip({ userId: 'user-2' });
     mockTripRepo.findById.mockResolvedValue(trip);
 
     await expect(
       useCase.execute('trip-1', { title: 'New' }, user),
-    ).rejects.toThrow(TripNotFoundException);
+    ).rejects.toThrow(ForbiddenException);
   });
 
   it('should update title successfully', async () => {

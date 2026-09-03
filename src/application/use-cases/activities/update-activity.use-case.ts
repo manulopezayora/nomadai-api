@@ -34,6 +34,7 @@ export class UpdateActivityUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only update activities on your own trips',
       );
     }
@@ -45,7 +46,10 @@ export class UpdateActivityUseCase {
     }
 
     if (dayPlan.tripId !== tripId) {
-      throw new ForbiddenException('Day plan does not belong to this trip');
+      throw new ForbiddenException(
+        'DAY_PLAN_FORBIDDEN',
+        'Day plan does not belong to this trip',
+      );
     }
 
     const activity = await this.activityRepository.findById(activityId);
@@ -55,11 +59,17 @@ export class UpdateActivityUseCase {
     }
 
     if (activity.dayPlanId !== dayPlanId) {
-      throw new ForbiddenException('Activity does not belong to this day plan');
+      throw new ForbiddenException(
+        'ACTIVITY_FORBIDDEN',
+        'Activity does not belong to this day plan',
+      );
     }
 
     if (dto.title !== undefined && dto.title.trim().length === 0) {
-      throw new ValidationException('Activity title cannot be empty');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Activity title cannot be empty',
+      );
     }
 
     return this.activityRepository.update(activityId, {

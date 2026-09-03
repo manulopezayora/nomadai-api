@@ -36,16 +36,23 @@ export class RecommendFlightsUseCase {
 
     if (trip.userId !== userId) {
       throw new ForbiddenException(
+        'TRIP_FORBIDDEN',
         'You can only generate recommendations for your own trips',
       );
     }
 
     if (!dto.origin || !dto.destination) {
-      throw new ValidationException('Origin and destination are required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Origin and destination are required',
+      );
     }
 
     if (!dto.departureDate) {
-      throw new ValidationException('Departure date is required');
+      throw new ValidationException(
+        'VALIDATION_INVALID_PARAMS',
+        'Departure date is required',
+      );
     }
 
     const days = Math.ceil(
