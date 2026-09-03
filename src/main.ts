@@ -7,6 +7,8 @@ import { DomainExceptionFilter } from './presentation/filters/domain-exception.f
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
+  app.setGlobalPrefix('api');
+
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
     : ['http://localhost:5173'];
@@ -36,7 +38,7 @@ async function bootstrap(): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api-docs', app, document);
 
   await app.listen(process.env.PORT ?? 3000);
 }
