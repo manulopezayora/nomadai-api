@@ -7,6 +7,17 @@ import { DomainExceptionFilter } from './presentation/filters/domain-exception.f
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
+  const corsOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
+    : ['http://localhost:5173'];
+
+  app.enableCors({
+    origin: corsOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   app.useGlobalFilters(new DomainExceptionFilter());
 
   app.useGlobalPipes(
