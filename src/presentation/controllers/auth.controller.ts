@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
+import { CheckStatusUseCase } from '../../application/use-cases/auth/check-status.use-case';
 import { RegisterDto } from '../../application/dto/register.dto';
 import { LoginDto } from '../../application/dto/login.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
@@ -22,6 +23,8 @@ export class AuthController {
     private readonly registerUseCase: RegisterUseCase,
     @Inject(LoginUseCase)
     private readonly loginUseCase: LoginUseCase,
+    @Inject(CheckStatusUseCase)
+    private readonly checkStatusUseCase: CheckStatusUseCase,
   ) {}
 
   @Post('register')
@@ -72,5 +75,19 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   getProfile(@CurrentUser() user: UserPayload) {
     return user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('check-status')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Validate JWT and return full user data' })
+  @ApiResponse({
+    status: 200,
+    description: 'User is authenticated, returns full user data',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid or expired token' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async checkStatus(@CurrentUser() user: UserPayload) {
+    return this.checkStatusUseCase.execute(user.userId);
   }
 }

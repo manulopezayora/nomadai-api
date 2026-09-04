@@ -7,6 +7,7 @@ import { PrismaUserRepository } from '../database/repositories/prisma-user.repos
 import { UserRepositoryPort } from '../../domain/ports/repositories/user.repository.port';
 import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
+import { CheckStatusUseCase } from '../../application/use-cases/auth/check-status.use-case';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from '../../presentation/controllers/auth.controller';
@@ -30,6 +31,7 @@ import { AuthController } from '../../presentation/controllers/auth.controller';
     { provide: UserRepositoryPort, useClass: PrismaUserRepository },
     RegisterUseCase,
     LoginUseCase,
+    CheckStatusUseCase,
     LocalStrategy,
     JwtStrategy,
   ],
