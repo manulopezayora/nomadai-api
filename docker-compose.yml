@@ -51,7 +51,7 @@ services:
     networks:
       - nomadai-network
     command: >
-      sh -c "pnpm install --frozen-lockfile &&
+      sh -c "pnpm install --no-frozen-lockfile &&
              pnpm prisma generate &&
              pnpm prisma migrate deploy &&
              pnpm tsx watch src/main.ts"
