@@ -1,18 +1,27 @@
-import { Body, Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import {
   ApiBearerAuth,
   ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
-import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
-import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
-import { CheckStatusUseCase } from '../../application/use-cases/auth/check-status.use-case';
-import { RegisterDto } from '../../application/dto/register.dto';
+import type { Response } from 'express';
 import { LoginDto } from '../../application/dto/login.dto';
-import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { RegisterDto } from '../../application/dto/register.dto';
+import { CheckStatusUseCase } from '../../application/use-cases/auth/check-status.use-case';
+import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
+import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import type { UserPayload } from '../../shared/types/user-payload';
 
 @ApiTags('Auth')
@@ -60,11 +69,37 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 200, description: 'Login successful, returns JWT' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful, sets httpOnly cookie',
+  })
   @ApiResponse({ status: 400, description: 'Invalid email format' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() dto: LoginDto) {
-    return this.loginUseCase.execute(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.loginUseCase.execute(dto);
+
+    const isSecure = process.env.COOKIE_SECURE === 'true';
+
+    res.cookie('token', result.accessToken, {
+      httpOnly: true,
+      secure: isSecure,
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return { user: result.user };
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Logout and clear authentication cookie' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token', { path: '/' });
+    return { message: 'Logged out successfully' };
   }
 
   @UseGuards(JwtAuthGuard)

@@ -1,6 +1,7 @@
 import { AuthController } from './auth.controller';
 import { RegisterUseCase } from '../../application/use-cases/auth/register.use-case';
 import { LoginUseCase } from '../../application/use-cases/auth/login.use-case';
+import { CheckStatusUseCase } from '../../application/use-cases/auth/check-status.use-case';
 import { UserRole } from '../../domain/enums/user-role.enum';
 import { SafeUser } from '../../application/dto/safe-user.dto';
 
@@ -23,6 +24,7 @@ describe('AuthController', () => {
   let controller: AuthController;
   let mockRegisterUseCase: jest.Mocked<RegisterUseCase>;
   let mockLoginUseCase: jest.Mocked<LoginUseCase>;
+  let mockCheckStatusUseCase: jest.Mocked<CheckStatusUseCase>;
 
   beforeEach(() => {
     mockRegisterUseCase = {
@@ -31,7 +33,14 @@ describe('AuthController', () => {
     mockLoginUseCase = {
       execute: jest.fn(),
     } as any;
-    controller = new AuthController(mockRegisterUseCase, mockLoginUseCase);
+    mockCheckStatusUseCase = {
+      execute: jest.fn(),
+    } as any;
+    controller = new AuthController(
+      mockRegisterUseCase,
+      mockLoginUseCase,
+      mockCheckStatusUseCase,
+    );
   });
 
   describe('register', () => {
@@ -67,7 +76,7 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should return login result from use case', async () => {
+    it('should set httpOnly cookie and return user data', async () => {
       const loginResult = {
         accessToken: 'jwt-token',
         user: {
@@ -80,12 +89,26 @@ describe('AuthController', () => {
       };
       mockLoginUseCase.execute.mockResolvedValue(loginResult);
 
-      const result = await controller.login({
-        email: 'test@test.com',
-        password: 'password123',
-      });
+      const mockRes = {
+        cookie: jest.fn(),
+      } as any;
 
-      expect(result).toEqual(loginResult);
+      const result = await controller.login(
+        { email: 'test@test.com', password: 'password123' },
+        mockRes,
+      );
+
+      expect(result).toEqual({ user: loginResult.user });
+      expect(result).not.toHaveProperty('accessToken');
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'token',
+        'jwt-token',
+        expect.objectContaining({
+          httpOnly: true,
+          sameSite: 'strict',
+          path: '/',
+        }),
+      );
     });
 
     it('should call loginUseCase with dto', async () => {
@@ -100,10 +123,12 @@ describe('AuthController', () => {
         },
       });
 
-      await controller.login({
-        email: 'test@test.com',
-        password: 'password123',
-      });
+      const mockRes = { cookie: jest.fn() } as any;
+
+      await controller.login(
+        { email: 'test@test.com', password: 'password123' },
+        mockRes,
+      );
 
       expect(mockLoginUseCase.execute).toHaveBeenCalledWith({
         email: 'test@test.com',
@@ -123,6 +148,19 @@ describe('AuthController', () => {
       const result = controller.getProfile(userPayload);
 
       expect(result).toEqual(userPayload);
+    });
+  });
+
+  describe('logout', () => {
+    it('should clear the token cookie', () => {
+      const mockRes = {
+        clearCookie: jest.fn(),
+      } as any;
+
+      const result = controller.logout(mockRes);
+
+      expect(mockRes.clearCookie).toHaveBeenCalledWith('token', { path: '/' });
+      expect(result).toEqual({ message: 'Logged out successfully' });
     });
   });
 });

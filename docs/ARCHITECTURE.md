@@ -253,11 +253,52 @@ Todos los controllers y DTOs incluyen decoradores de Swagger (`@ApiTags`, `@ApiO
 
 ### Auth
 
-| Método | Ruta             | Descripción                    | Auth |
-| ------ | ---------------- | ------------------------------ | ---- |
-| POST   | `/auth/register` | Registro email+contraseña      | No   |
-| POST   | `/auth/login`    | Login, retorna JWT en body     | No   |
-| GET    | `/auth/profile`  | Perfil del usuario autenticado | Sí   |
+| Método | Ruta                 | Descripción                                      | Auth |
+| ------ | -------------------- | ------------------------------------------------ | ---- |
+| POST   | `/auth/register`     | Registro email+contraseña                        | No   |
+| POST   | `/auth/login`        | Login, setea httpOnly cookie con JWT             | No   |
+| POST   | `/auth/logout`       | Logout, limpia cookie de autenticación           | No   |
+| GET    | `/auth/check-status` | Valida JWT y retorna usuario completo            | Sí   |
+| GET    | `/auth/profile`      | Payload mínimo del usuario (userId, email, role) | Sí   |
+
+#### Autenticación por Cookie (httpOnly)
+
+El backend usa **httpOnly cookies** para almacenar el JWT. Esto es más seguro que localStorage porque el token no es accesible desde JavaScript (protección contra XSS).
+
+**Flujo de login:**
+
+1. Frontend envía `POST /auth/login` con `{ email, password }`
+2. Backend setea cookie `token` con flags: `HttpOnly`, `Secure` (en producción), `SameSite=Strict`, `Path=/`
+3. Backend retorna `{ user: { id, email, firstName, lastName, role } }` en el body (sin accessToken)
+4. Frontend guarda solo el objeto `user` en Pinia (no el token)
+
+**Flujo de requests autenticados:**
+
+1. Navegador adjunta cookie `token` automáticamente en cada request al mismo dominio
+2. Backend extrae JWT de la cookie (o del header `Authorization: Bearer` para Swagger/testing)
+3. No se necesita interceptor en Axios — solo `withCredentials: true`
+
+**Configuración de cookie:**
+
+| Flag       | Valor            | Descripción                                    |
+| ---------- | ---------------- | ---------------------------------------------- |
+| `httpOnly` | `true`           | No accesible desde JavaScript (XSS protection) |
+| `secure`   | `true` en prod   | Solo envía por HTTPS                           |
+| `sameSite` | `strict`         | Mitiga CSRF                                    |
+| `path`     | `/`              | Disponible en todas las rutas                  |
+| `maxAge`   | `15 * 60 * 1000` | 15 minutos (igual que JWT_EXPIRES_IN)          |
+
+**Frontend (Vue/Axios):**
+
+```typescript
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_CLIENT_URL,
+  withCredentials: true, // Adjunta cookie automáticamente
+});
+// NO se necesita interceptor de Authorization header
+```
+
+**Swagger:** Soporta `Authorization: Bearer <token>` para testing manual.
 
 ### Users
 

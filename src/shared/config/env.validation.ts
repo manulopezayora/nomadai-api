@@ -15,6 +15,7 @@ export const envValidationSchema = Joi.object({
   GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
   PORT: Joi.number().default(3000),
   CORS_ORIGINS: Joi.string().default('http://localhost:5173'),
+  COOKIE_SECURE: Joi.boolean().default(false),
   NODE_ENV: Joi.string()
     .valid('development', 'production', 'test')
     .default('development'),
