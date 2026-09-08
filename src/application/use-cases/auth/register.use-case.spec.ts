@@ -122,7 +122,7 @@ describe('RegisterUseCase', () => {
         email: 'new@test.com',
         firstName: 'Test',
         lastName: 'User',
-        avatarUrl: null,
+        avatarPublicId: null,
         provider: 'local',
         providerId: null,
         role: 'USER',

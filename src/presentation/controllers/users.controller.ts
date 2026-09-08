@@ -71,9 +71,10 @@ export class UsersController {
       properties: {
         firstName: { type: 'string', example: 'John' },
         lastName: { type: 'string', example: 'Doe' },
-        avatarUrl: {
+        avatarPublicId: {
           type: 'string',
-          example: 'https://example.com/avatar.jpg',
+          example: 'avatars/user123',
+          description: 'Cloudinary public ID for avatar',
         },
         role: {
           type: 'string',

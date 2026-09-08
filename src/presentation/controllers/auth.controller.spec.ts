@@ -10,7 +10,7 @@ const mockSafeUser = (overrides?: Partial<SafeUser>): SafeUser => ({
   email: 'test@example.com',
   firstName: 'Test',
   lastName: 'User',
-  avatarUrl: null,
+  avatarPublicId: null,
   provider: 'local',
   providerId: null,
   role: UserRole.USER,

@@ -14,12 +14,12 @@ export class UpdateUserDto {
   lastName?: string;
 
   @ApiPropertyOptional({
-    example: 'https://example.com/avatar.jpg',
-    description: 'Avatar URL',
+    example: 'avatars/user123',
+    description: 'Cloudinary public ID for avatar',
   })
   @IsString()
   @IsOptional()
-  avatarUrl?: string;
+  avatarPublicId?: string;
 
   @ApiPropertyOptional({
     enum: UserRole,

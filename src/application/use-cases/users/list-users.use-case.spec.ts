@@ -79,7 +79,7 @@ describe('ListUsersUseCase', () => {
       email: 'test@example.com',
       firstName: 'Test',
       lastName: 'User',
-      avatarUrl: null,
+      avatarPublicId: null,
       provider: 'local',
       providerId: null,
       role: 'USER',

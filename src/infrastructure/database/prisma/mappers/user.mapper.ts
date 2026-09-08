@@ -11,7 +11,7 @@ interface PrismaUser {
   passwordHash: string | null;
   firstName: string | null;
   lastName: string | null;
-  avatarUrl: string | null;
+  avatarPublicId: string | null;
   provider: string;
   providerId: string | null;
   role: string;
@@ -28,7 +28,7 @@ export class UserMapper {
       passwordHash: raw.passwordHash,
       firstName: raw.firstName,
       lastName: raw.lastName,
-      avatarUrl: raw.avatarUrl,
+      avatarPublicId: raw.avatarPublicId,
       provider: raw.provider,
       providerId: raw.providerId,
       role: raw.role as UserRole,
@@ -53,7 +53,9 @@ export class UserMapper {
     return {
       ...(data.firstName !== undefined && { firstName: data.firstName }),
       ...(data.lastName !== undefined && { lastName: data.lastName }),
-      ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+      ...(data.avatarPublicId !== undefined && {
+        avatarPublicId: data.avatarPublicId,
+      }),
       ...(data.role !== undefined && { role: data.role }),
       ...(data.isActive !== undefined && { isActive: data.isActive }),
     };

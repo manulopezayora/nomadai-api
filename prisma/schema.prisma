@@ -28,7 +28,7 @@ model User {
   passwordHash String?   @map("password_hash")
   firstName    String?   @map("first_name")
   lastName     String?   @map("last_name")
-  avatarUrl    String?   @map("avatar_url")
+  avatarPublicId String? @map("avatar_public_id")
   provider     String    @default("local")
   providerId   String?   @map("provider_id")
   role         UserRole  @default(USER)

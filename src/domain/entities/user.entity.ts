@@ -6,7 +6,7 @@ export interface User {
   passwordHash: string | null;
   firstName: string | null;
   lastName: string | null;
-  avatarUrl: string | null;
+  avatarPublicId: string | null;
   provider: string;
   providerId: string | null;
   role: UserRole;

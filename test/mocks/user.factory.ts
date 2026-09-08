@@ -7,7 +7,7 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   passwordHash: '$2b$10$hashedpassword',
   firstName: 'Test',
   lastName: 'User',
-  avatarUrl: null,
+  avatarPublicId: null,
   provider: 'local',
   providerId: null,
   role: UserRole.USER,

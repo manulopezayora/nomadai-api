@@ -13,7 +13,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
   firstName?: string;
   lastName?: string;
-  avatarUrl?: string;
+  avatarPublicId?: string;
   role?: UserRole;
   isActive?: boolean;
 }
