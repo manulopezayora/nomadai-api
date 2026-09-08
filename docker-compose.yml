@@ -50,6 +50,11 @@ services:
       DATABASE_URL: 'postgresql://postgres:postgres@postgres:5432/nomadai?schema=public'
     networks:
       - nomadai-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
     command: >
       sh -c "pnpm install --no-frozen-lockfile &&
              pnpm prisma generate &&

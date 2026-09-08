@@ -23,4 +23,5 @@ README.md
 .windsurf
 .agents
 skills-lock.json
-prisma/migrations
+.eslintcache
+*.log
