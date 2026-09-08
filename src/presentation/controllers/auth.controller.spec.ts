@@ -76,16 +76,11 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should set httpOnly cookie and return user data', async () => {
+    it('should set httpOnly cookie and return full SafeUser', async () => {
+      const user = mockSafeUser({ id: 'user-123', email: 'test@test.com' });
       const loginResult = {
         accessToken: 'jwt-token',
-        user: {
-          id: 'user-123',
-          email: 'test@test.com',
-          firstName: 'Test',
-          lastName: 'User',
-          role: 'USER',
-        },
+        user,
       };
       mockLoginUseCase.execute.mockResolvedValue(loginResult);
 
@@ -98,8 +93,9 @@ describe('AuthController', () => {
         mockRes,
       );
 
-      expect(result).toEqual({ user: loginResult.user });
+      expect(result).toEqual({ user });
       expect(result).not.toHaveProperty('accessToken');
+      expect(result.user).not.toHaveProperty('passwordHash');
       expect(mockRes.cookie).toHaveBeenCalledWith(
         'token',
         'jwt-token',
@@ -114,13 +110,7 @@ describe('AuthController', () => {
     it('should call loginUseCase with dto', async () => {
       mockLoginUseCase.execute.mockResolvedValue({
         accessToken: 'token',
-        user: {
-          id: '1',
-          email: 't@t.com',
-          firstName: null,
-          lastName: null,
-          role: 'USER',
-        },
+        user: mockSafeUser({ id: '1', email: 't@t.com' }),
       });
 
       const mockRes = { cookie: jest.fn() } as any;

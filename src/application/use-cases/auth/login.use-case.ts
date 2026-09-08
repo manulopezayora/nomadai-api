@@ -5,16 +5,11 @@ import { UserRepositoryPort } from '../../../domain/ports/repositories/user.repo
 import { LoginDto } from '../../dto/login.dto';
 import { UnauthorizedException } from '../../../domain/exceptions/unauthorized.exception';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { SafeUser, toSafeUser } from '../../dto/safe-user.dto';
 
 export interface LoginResult {
   accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-    role: string;
-  };
+  user: SafeUser;
 }
 
 @Injectable()
@@ -79,13 +74,7 @@ export class LoginUseCase {
 
     return {
       accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
+      user: toSafeUser(user),
     };
   }
 }

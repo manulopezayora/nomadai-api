@@ -100,22 +100,27 @@ describe('LoginUseCase', () => {
       mockJwtService.sign.mockReturnValue('jwt-token-123');
     });
 
-    it('should return accessToken and user data', async () => {
+    it('should return accessToken and full SafeUser', async () => {
       const result = await useCase.execute({
         email: 'test@test.com',
         password: 'correctpassword',
       });
 
-      expect(result).toEqual({
-        accessToken: 'jwt-token-123',
-        user: {
-          id: 'user-123',
-          email: 'test@test.com',
-          firstName: 'Test',
-          lastName: 'User',
-          role: 'USER',
-        },
+      expect(result.accessToken).toBe('jwt-token-123');
+      expect(result.user).toEqual({
+        id: 'user-123',
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        avatarPublicId: null,
+        provider: 'local',
+        providerId: null,
+        role: 'USER',
+        isActive: true,
+        createdAt: mockUser.createdAt,
+        updatedAt: mockUser.updatedAt,
       });
+      expect(result.user).not.toHaveProperty('passwordHash');
     });
 
     it('should call jwtService.sign with correct payload', async () => {
