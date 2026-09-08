@@ -3,6 +3,9 @@ import { ConflictException } from '../../../domain/exceptions/conflict.exception
 import { createMockUserRepository } from '../../../../test/mocks/user-repository.mock';
 import { createMockUser } from '../../../../test/mocks/user.factory';
 import { RegisterUseCase } from './register.use-case';
+import * as bcrypt from 'bcryptjs';
+
+jest.mock('bcryptjs');
 
 describe('RegisterUseCase', () => {
   let useCase: RegisterUseCase;
@@ -41,6 +44,7 @@ describe('RegisterUseCase', () => {
     it('should accept valid email and password', async () => {
       mockUserRepo.findByEmail.mockResolvedValue(null);
       mockUserRepo.create.mockResolvedValue(createMockUser());
+      (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$10$hashedpassword');
 
       const result = await useCase.execute({
         email: 'valid@test.com',
@@ -79,6 +83,7 @@ describe('RegisterUseCase', () => {
     beforeEach(() => {
       mockUserRepo.findByEmail.mockResolvedValue(null);
       mockUserRepo.create.mockResolvedValue(createMockUser());
+      (bcrypt.hash as jest.Mock).mockResolvedValue('$2b$10$hashedpassword');
     });
 
     it('should create user with correct data', async () => {
