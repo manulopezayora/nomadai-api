@@ -41,20 +41,25 @@ Additionally, flights/hotels/itinerary are generated via separate `/recommend/*`
 
 ### Block 2 — Modify `POST /api/trips` to save full trip
 
-**~1.5h**
+**~1.5h** ✅ COMPLETED
 
 - New DTO `SaveGeneratedTripDto` accepting `{ trip, flights, hotels, itinerary }`
-- Modify `CreateTripUseCase` to use Prisma nested creates in a transaction
-- Ensure atomicity: if any part fails, nothing is saved
+- New `SaveGeneratedTripUseCase` with Prisma `$transaction` for atomic save
+- New endpoint `POST /api/trips/save-generated` on TripsController
+- Register in TripsModule
+- 13 tests (validation + full save with flights/hotels/itinerary + minimal save)
 
-**Files to modify:**
+**Files created:**
 
-- `src/application/use-cases/trips/create-trip.use-case.ts` — add nested save logic
-- `src/application/dto/create-trip.dto.ts` — extend or create new DTO
-- `src/presentation/controllers/trips.controller.ts` — accept nested data
-- Tests
+- `src/application/dto/save-generated-trip.dto.ts` — DTO with nested types
+- `src/application/use-cases/trips/save-generated-trip.use-case.ts` — Use case with Prisma transaction
+- `src/application/use-cases/trips/save-generated-trip.use-case.spec.ts` — 13 tests
 
-**New files:**
+**Files modified:**
+
+- `src/presentation/controllers/trips.controller.ts` — new `POST /trips/save-generated` endpoint
+- `src/presentation/controllers/trips.controller.spec.ts` — updated constructor + mock
+- `src/infrastructure/trips/trips.module.ts` — registered SaveGeneratedTripUseCase
 
 - `src/application/dto/save-generated-trip.dto.ts` — DTO for full trip save
 
@@ -68,7 +73,7 @@ Additionally, flights/hotels/itinerary are generated via separate `/recommend/*`
 ## Response Shape
 
 ```typescript
-interface GenerateTripResponse {
+interface GenerateTripResult {
   trip: {
     title: string;
     destination: string;
@@ -102,5 +107,5 @@ interface GenerateTripResponse {
 ## Status
 
 - [x] Block 1: Refactor generate endpoint (no DB) — DONE (29 suites, 213 tests passing)
-- [ ] Block 2: Modify create endpoint to save full trip
+- [x] Block 2: Modify create endpoint to save full trip — DONE (30 suites, 226 tests passing)
 - [ ] Block 3: Clean up (optional)

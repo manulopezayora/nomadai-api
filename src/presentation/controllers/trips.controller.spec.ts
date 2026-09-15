@@ -1,6 +1,16 @@
+jest.mock(
+  '../../application/use-cases/trips/save-generated-trip.use-case',
+  () => ({
+    SaveGeneratedTripUseCase: jest
+      .fn()
+      .mockImplementation(() => ({ execute: jest.fn() })),
+  }),
+);
+
 import { TripsController } from './trips.controller';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GenerateTripUseCase } from '../../application/use-cases/trips/generate-trip.use-case';
+import { SaveGeneratedTripUseCase } from '../../application/use-cases/trips/save-generated-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
 import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
@@ -13,6 +23,7 @@ describe('TripsController', () => {
   let controller: TripsController;
   let mockCreateTrip: jest.Mocked<CreateTripUseCase>;
   let mockGenerateTrip: jest.Mocked<GenerateTripUseCase>;
+  let mockSaveGeneratedTrip: jest.Mocked<SaveGeneratedTripUseCase>;
   let mockGetTrip: jest.Mocked<GetTripUseCase>;
   let mockListTrips: jest.Mocked<ListTripsUseCase>;
   let mockListAllTrips: jest.Mocked<ListAllTripsUseCase>;
@@ -28,6 +39,7 @@ describe('TripsController', () => {
   beforeEach(() => {
     mockCreateTrip = { execute: jest.fn() } as any;
     mockGenerateTrip = { execute: jest.fn() } as any;
+    mockSaveGeneratedTrip = { execute: jest.fn() } as any;
     mockGetTrip = { execute: jest.fn() } as any;
     mockListTrips = { execute: jest.fn() } as any;
     mockListAllTrips = { execute: jest.fn() } as any;
@@ -37,6 +49,7 @@ describe('TripsController', () => {
     controller = new TripsController(
       mockCreateTrip,
       mockGenerateTrip,
+      mockSaveGeneratedTrip,
       mockGetTrip,
       mockListTrips,
       mockListAllTrips,

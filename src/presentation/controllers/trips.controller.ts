@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GenerateTripUseCase } from '../../application/use-cases/trips/generate-trip.use-case';
+import { SaveGeneratedTripUseCase } from '../../application/use-cases/trips/save-generated-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
 import { ListAllTripsUseCase } from '../../application/use-cases/trips/list-all-trips.use-case';
@@ -28,6 +29,7 @@ import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 import { GenerateTripDto } from '../../application/dto/generate-trip.dto';
+import { SaveGeneratedTripDto } from '../../application/dto/save-generated-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
 import { PaginationDto } from '../../application/dto/pagination.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
@@ -47,6 +49,8 @@ export class TripsController {
     private readonly createTripUseCase: CreateTripUseCase,
     @Inject(GenerateTripUseCase)
     private readonly generateTripUseCase: GenerateTripUseCase,
+    @Inject(SaveGeneratedTripUseCase)
+    private readonly saveGeneratedTripUseCase: SaveGeneratedTripUseCase,
     @Inject(GetTripUseCase)
     private readonly getTripUseCase: GetTripUseCase,
     @Inject(ListTripsUseCase)
@@ -125,6 +129,84 @@ export class TripsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@CurrentUser() user: UserPayload, @Body() dto: CreateTripDto) {
     return this.createTripUseCase.execute(dto, user.userId);
+  }
+
+  @Post('save-generated')
+  @ApiOperation({
+    summary: 'Save a generated trip with flights, hotels and itinerary',
+    description:
+      'Saves the full trip data from POST /trips/generate to the database in a single transaction.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['title', 'destination', 'startDate', 'endDate', 'interests'],
+      properties: {
+        title: { type: 'string', example: '10 Days in Japan' },
+        destination: { type: 'string', example: 'Japan' },
+        startDate: { type: 'string', example: '2026-09-15' },
+        endDate: { type: 'string', example: '2026-09-25' },
+        budget: { type: 'number', example: 5000 },
+        travelerCount: { type: 'number', example: 2 },
+        interests: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['culture', 'food'],
+        },
+        travelStyle: { type: 'string', enum: ['budget', 'mid', 'luxury'] },
+        flights: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              airline: { type: 'string' },
+              origin: { type: 'string' },
+              destination: { type: 'string' },
+              price: { type: 'number' },
+            },
+          },
+        },
+        hotels: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              city: { type: 'string' },
+              pricePerNight: { type: 'number' },
+            },
+          },
+        },
+        itinerary: {
+          type: 'object',
+          properties: {
+            days: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  dayNumber: { type: 'number' },
+                  title: { type: 'string' },
+                  activities: { type: 'array' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Trip saved with flights, hotels and itinerary',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async saveGenerated(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: SaveGeneratedTripDto,
+  ) {
+    return this.saveGeneratedTripUseCase.execute(dto, user.userId);
   }
 
   @Get()
