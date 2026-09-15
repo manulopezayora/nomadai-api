@@ -110,12 +110,9 @@ describe('GeminiService', () => {
         message: 'Model not found',
       });
 
-      await expect(
-        service.generateStructuredOutput('prompt', testSchema),
-      ).rejects.toThrow(GeminiServiceException);
-
       try {
         await service.generateStructuredOutput('prompt', testSchema);
+        fail('Expected GeminiServiceException');
       } catch (error) {
         expect(error).toBeInstanceOf(GeminiServiceException);
         expect((error as GeminiServiceException).code).toBe(
@@ -133,6 +130,7 @@ describe('GeminiService', () => {
 
       try {
         await service.generateStructuredOutput('prompt', testSchema);
+        fail('Expected GeminiServiceException');
       } catch (error) {
         expect(error).toBeInstanceOf(GeminiServiceException);
         expect((error as GeminiServiceException).code).toBe(
@@ -149,6 +147,7 @@ describe('GeminiService', () => {
 
       try {
         await service.generateStructuredOutput('prompt', testSchema);
+        fail('Expected GeminiServiceException');
       } catch (error) {
         expect(error).toBeInstanceOf(GeminiServiceException);
         expect((error as GeminiServiceException).code).toBe(

@@ -166,4 +166,55 @@ describe('TripsController', () => {
       expect(mockDeleteTrip.execute).toHaveBeenCalledWith('trip-1', 'user-123');
     });
   });
+
+  describe('generate', () => {
+    it('should generate a trip preview and return it', async () => {
+      const generatedTrip = {
+        trip: {
+          title: '10 Days in Japan',
+          destination: 'Japan',
+          startDate: '2026-09-15',
+          endDate: '2026-09-25',
+          budget: null,
+          travelerCount: 1,
+          interests: ['culture', 'food'],
+          travelStyle: 'mid',
+        },
+        flights: [],
+        hotels: [],
+        itinerary: { days: [] },
+      };
+      mockGenerateTrip.execute.mockResolvedValue(generatedTrip as never);
+
+      const result = await controller.generate(mockUser, {
+        prompt: '10 days in Japan, culture and relax',
+      });
+
+      expect(result).toEqual(generatedTrip);
+      expect(mockGenerateTrip.execute).toHaveBeenCalledWith({
+        prompt: '10 days in Japan, culture and relax',
+      });
+    });
+  });
+
+  describe('saveGenerated', () => {
+    it('should save a generated trip and return the created trip', async () => {
+      const trip = createMockTrip({ id: 'trip-new' });
+      mockSaveGeneratedTrip.execute.mockResolvedValue(trip);
+
+      const result = await controller.saveGenerated(mockUser, {
+        title: '10 Days in Japan',
+        destination: 'Japan',
+        startDate: '2026-09-15',
+        endDate: '2026-09-25',
+        interests: ['culture', 'food'],
+        flights: [],
+        hotels: [],
+        itinerary: { days: [] },
+      });
+
+      expect(result).toEqual(trip);
+      expect(mockSaveGeneratedTrip.execute).toHaveBeenCalled();
+    });
+  });
 });

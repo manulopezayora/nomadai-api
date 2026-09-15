@@ -57,7 +57,7 @@ export const itinerarySchema = {
                 costEstimate: {
                   type: 'number',
                   minimum: 0,
-                  description: 'Estimated cost in USD',
+                  description: 'Estimated cost in EUR',
                 },
                 tips: {
                   type: 'string',

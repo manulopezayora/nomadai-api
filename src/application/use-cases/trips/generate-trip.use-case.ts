@@ -13,7 +13,10 @@ import { FlightRecommendationMapper } from '../../../shared/ai/flight-recommenda
 import { hotelRecommendationSchema } from '../../../shared/ai/hotel.schema';
 import { HotelRecommendationMapper } from '../../../shared/ai/hotel-recommendation.mapper';
 import { itinerarySchema } from '../../../shared/ai/itinerary.schema';
-import { ItineraryMapper } from '../../../shared/ai/itinerary.mapper';
+import {
+  ItineraryMapper,
+  ItineraryResponse,
+} from '../../../shared/ai/itinerary.mapper';
 import { TravelStyle } from '../../../domain/enums/travel-style.enum';
 
 @Injectable()
@@ -80,7 +83,7 @@ export class GenerateTripUseCase {
           this.buildHotelsPrompt(mapped, days),
           hotelRecommendationSchema,
         ),
-        this.gemini.generateStructuredOutput<unknown>(
+        this.gemini.generateStructuredOutput<ItineraryResponse>(
           this.buildItineraryPrompt(mapped, days),
           itinerarySchema,
         ),
@@ -142,11 +145,13 @@ Return a valid JSON object matching the schema.`;
       destination: string;
       travelerCount: number;
       travelStyle: TravelStyle;
-      startDate: string;
-      endDate: string;
+      startDate: Date;
+      endDate: Date;
     },
     days: number,
   ): string {
+    const startDateStr = trip.startDate.toISOString().split('T')[0];
+    const endDateStr = trip.endDate.toISOString().split('T')[0];
     return `Recommend ${trip.travelerCount} flight option(s) to ${trip.destination}.
 
 Trip details:
@@ -154,8 +159,8 @@ Trip details:
 - Duration: ${days} days
 - Travelers: ${trip.travelerCount}
 - Travel style: ${trip.travelStyle}
-- Departure date: ${trip.startDate}
-- Return date: ${trip.endDate}
+- Departure date: ${startDateStr}
+- Return date: ${endDateStr}
 
 For each flight, provide:
 - airline (name)
@@ -180,11 +185,13 @@ Return 2-3 realistic options with varying price ranges.`;
       travelerCount: number;
       budget: number | null;
       travelStyle: TravelStyle;
-      startDate: string;
-      endDate: string;
+      startDate: Date;
+      endDate: Date;
     },
     days: number,
   ): string {
+    const startDateStr = trip.startDate.toISOString().split('T')[0];
+    const endDateStr = trip.endDate.toISOString().split('T')[0];
     return `Recommend hotel options in ${trip.destination} for a trip.
 
 Trip details:
@@ -193,8 +200,8 @@ Trip details:
 - Travelers: ${trip.travelerCount}
 - Travel style: ${trip.travelStyle}
 - Total budget: ${trip.budget ? `${trip.budget} EUR` : 'not specified'}
-- Check-in: ${trip.startDate}
-- Check-out: ${trip.endDate}
+- Check-in: ${startDateStr}
+- Check-out: ${endDateStr}
 
 For each hotel, provide:
 - name
@@ -218,8 +225,8 @@ Return 3-4 realistic options with varying price ranges.`;
   private buildItineraryPrompt(
     trip: {
       destination: string;
-      startDate: string;
-      endDate: string;
+      startDate: Date;
+      endDate: Date;
       travelerCount: number;
       budget: number | null;
       interests: string[];
@@ -227,12 +234,14 @@ Return 3-4 realistic options with varying price ranges.`;
     },
     days: number,
   ): string {
+    const startDateStr = trip.startDate.toISOString().split('T')[0];
+    const endDateStr = trip.endDate.toISOString().split('T')[0];
     return `Create a detailed ${days}-day itinerary for a trip to ${trip.destination}.
 
 Trip details:
 - Destination: ${trip.destination}
-- Start date: ${trip.startDate}
-- End date: ${trip.endDate}
+- Start date: ${startDateStr}
+- End date: ${endDateStr}
 - Duration: ${days} days
 - Travelers: ${trip.travelerCount}
 - Budget: ${trip.budget ? `${trip.budget} EUR total` : 'not specified'}

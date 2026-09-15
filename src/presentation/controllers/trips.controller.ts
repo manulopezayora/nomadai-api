@@ -92,7 +92,7 @@ export class TripsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 502, description: 'AI service error' })
   async generate(
-    @CurrentUser() user: UserPayload,
+    @CurrentUser() _user: UserPayload,
     @Body() dto: GenerateTripDto,
   ) {
     return this.generateTripUseCase.execute(dto);

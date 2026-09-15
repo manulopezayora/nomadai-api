@@ -1,4 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+// NOTE: PrismaService import from infrastructure is intentional here.
+// This use case needs Prisma $transaction for atomic multi-aggregate saves.
+// Repository ports don't support cross-aggregate transactions natively.
+// See: docs/PLAN-TRIP-GENERATION-REFACTOR.md
 import { PrismaService } from '../../../infrastructure/database/prisma/prisma.service';
 import { SaveGeneratedTripDto } from '../../dto/save-generated-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';

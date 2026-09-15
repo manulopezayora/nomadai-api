@@ -82,7 +82,7 @@ interface GenerateTripResult {
     budget: number | null;
     travelerCount: number;
     interests: string[];
-    travelStyle: string;
+    travelStyle: TravelStyle;
   };
   flights: CreateFlightRecommendationData[];
   hotels: CreateHotelRecommendationData[];
