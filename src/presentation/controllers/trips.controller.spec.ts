@@ -129,11 +129,11 @@ describe('TripsController', () => {
   describe('findOne', () => {
     it('should return a trip by id', async () => {
       const trip = createMockTrip({ id: 'trip-1' });
-      mockGetTrip.execute.mockResolvedValue(trip);
+      mockGetTrip.execute.mockResolvedValue({ ...trip, dayPlans: [] } as never);
 
       const result = await controller.findOne('trip-1', mockUser);
 
-      expect(result).toEqual(trip);
+      expect(result).toMatchObject(trip);
       expect(mockGetTrip.execute).toHaveBeenCalledWith('trip-1', 'user-123');
     });
   });
