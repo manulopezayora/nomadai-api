@@ -61,7 +61,10 @@ export class TripsController {
 
   @Post('generate')
   @ApiOperation({
-    summary: 'Generate a trip from a natural language prompt using AI',
+    summary:
+      'Generate a complete trip with flights, hotels and itinerary using AI',
+    description:
+      'Generates trip data, flight recommendations, hotel recommendations and a day-by-day itinerary from a natural language prompt. Returns all data without saving to DB. Use POST /trips to save.',
   })
   @ApiBody({
     schema: {
@@ -76,15 +79,19 @@ export class TripsController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Trip generated and created' })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Trip generated with flights, hotels and itinerary (not saved to DB)',
+  })
   @ApiResponse({ status: 400, description: 'Invalid prompt' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 500, description: 'AI service error' })
+  @ApiResponse({ status: 502, description: 'AI service error' })
   async generate(
     @CurrentUser() user: UserPayload,
     @Body() dto: GenerateTripDto,
   ) {
-    return this.generateTripUseCase.execute(dto, user.userId);
+    return this.generateTripUseCase.execute(dto);
   }
 
   @Post()
