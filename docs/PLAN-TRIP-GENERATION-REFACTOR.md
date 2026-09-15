@@ -65,10 +65,10 @@ Additionally, flights/hotels/itinerary are generated via separate `/recommend/*`
 
 ### Block 3 — Clean up old recommendation endpoints (optional)
 
-**~0.5h**
+**~0.5h** ✅ COMPLETED
 
-- Keep `/recommend/*` endpoints for future use (regenerate flights only, regenerate itinerary only)
-- Or remove them if not needed
+- Kept `/recommend/*` endpoints — useful for regenerating individual parts (just flights, just hotels, just itinerary)
+- No code changes needed
 
 ## Response Shape
 
@@ -106,6 +106,6 @@ interface GenerateTripResult {
 
 ## Status
 
-- [x] Block 1: Refactor generate endpoint (no DB) — DONE (29 suites, 213 tests passing)
-- [x] Block 2: Modify create endpoint to save full trip — DONE (30 suites, 226 tests passing)
-- [ ] Block 3: Clean up (optional)
+- [x] Block 1: Refactor generate endpoint (no DB) — DONE
+- [x] Block 2: Modify create endpoint to save full trip — DONE
+- [x] Block 3: Clean up (optional) — DONE (kept /recommend/* endpoints)
