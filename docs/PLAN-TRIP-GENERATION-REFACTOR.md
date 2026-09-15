@@ -1,76 +1,76 @@
-# Plan: Refactor Trip Generation Flow — Preview First, Save Later
+# Plan: Trip Generation Flow — Option C (RPM-Optimized)
 
-## Problem
+## Problem (2026-09-15)
 
-Current flow saves a Trip to DB immediately on `POST /api/trips/generate`, even if the user decides not to keep it. This creates orphaned data and provides no preview experience.
+Gemini free tier allows **5 RPM**. The previous implementation (`POST /trips/generate`) made **4 parallel Gemini calls** (trip + flights + hotels + itinerary), consuming 4 RPM per request. This meant the user could only generate once per minute, and hitting it twice caused 503 errors.
 
-Additionally, flights/hotels/itinerary are generated via separate `/recommend/*` endpoints, requiring the user to navigate away and make multiple calls.
+## Current State
 
-## Desired Flow
+- `POST /api/trips/generate` — makes 4 parallel Gemini calls → returns trip + flights + hotels + itinerary
+- `POST /api/trips/save-generated` — saves everything to DB in a transaction
+- `POST /api/trips/:id/recommend/flights|hotels|itinerary` — existing endpoints (not used in generate flow)
+
+## Desired Flow (Option C)
+
+**1 Gemini call per user action. Never exceed 1 RPM.**
 
 ```
-[1] User types prompt in textarea
-[2] POST /api/trips/generate → 4 parallel Gemini calls → returns ALL data WITHOUT saving to DB
-[3] Frontend stores in Pinia/state → Shows full preview (trip, flights, hotels, itinerary)
-[4] User reviews and clicks "Save" → POST /api/trips → saves everything to DB in a transaction
+[1] User types prompt "5 días en Roma"
+    → POST /api/trips/generate  (1 Gemini call: parse prompt → trip data)
+    → Returns: { trip }  ← solo viaje, sin recommendations
+    → NO save to DB
+
+[2] Frontend shows trip preview
+    → Título, destino, fechas, preferences
+    → Botón "Guardar viaje"
+
+[3] User clicks "Guardar"
+    → POST /api/trips/save-generated  (0 Gemini calls, solo save a BD)
+    → Returns: { tripId: "abc123" }
+    → Redirect → /trips/abc123
+
+[4] Vista del viaje → pestañas "Vuelos" | "Hoteles" | "Itinerario"
+
+[5] User clicks "Vuelos"
+    → POST /api/trips/abc123/recommend/flights  (1 Gemini call)
+    → Se guardan en BD
+    → Se muestran
+
+[6] User clicks "Hoteles"
+    → POST /api/trips/abc123/recommend/hotels  (1 Gemini call)
+
+[7] User clicks "Itinerario"
+    → POST /api/trips/abc123/recommend/itinerary  (1 Gemini call)
 ```
+
+## RPM Consumption
+
+| Endpoint                              | Gemini Calls | RPM | When              |
+| ------------------------------------- | ------------ | --- | ----------------- |
+| `POST /trips/generate`                | 1            | 1   | User types prompt |
+| `POST /trips/save-generated`          | 0            | 0   | User clicks save  |
+| `POST /trips/:id/recommend/flights`   | 1            | 1   | User clicks tab   |
+| `POST /trips/:id/recommend/hotels`    | 1            | 1   | User clicks tab   |
+| `POST /trips/:id/recommend/itinerary` | 1            | 1   | User clicks tab   |
+
+**Max 1 RPM per user action. Never exceeds 5 RPM limit.**
 
 ## Implementation Blocks
 
-### Block 1 — Refactor `POST /api/trips/generate` (no DB)
+### Block 1 — Simplify `POST /trips/generate` (1 Gemini call only)
 
-**~1.5h** ✅ COMPLETED
+**~1h**
 
-- Modify `GenerateTripUseCase`: remove DB save, make 4 parallel Gemini calls (trip, flights, hotels, itinerary)
-- Create response type `GenerateTripResult` with shape: `{ trip, flights, hotels, itinerary }`
-- Reuse existing mappers: `TripPromptMapper`, `FlightRecommendationMapper`, `HotelRecommendationMapper`, `ItineraryMapper`
-- Return plain objects without touching repository
-- Build prompts for flights/hotels/itinerary using trip context (destination, dates, style, etc.)
-- Update tests (8 tests, all passing)
+Revert the 4-parallel-calls approach. Generate endpoint should only parse the prompt into trip data (1 Gemini call).
 
-**Files to modify:**
+**Changes:**
 
-- `src/application/use-cases/trips/generate-trip.use-case.ts` — rewrite execute()
-- `src/presentation/controllers/trips.controller.ts` — response type
-- `src/infrastructure/ai/gemini.service.spec.ts` — tests
-- `src/application/use-cases/trips/generate-trip.use-case.spec.ts` — tests (if exists)
+- `src/application/use-cases/trips/generate-trip.use-case.ts` — remove flights/hotels/itinerary generation, keep only trip parsing
+- `src/application/dto/generate-trip-response.dto.ts` — simplify to only return `trip` (remove flights, hotels, itinerary)
+- `src/presentation/controllers/trips.controller.ts` — update Swagger docs (remove flights/hotels/itinerary from response)
+- `src/application/use-cases/trips/generate-trip.use-case.spec.ts` — update tests (1 Gemini call, not 4)
 
-**New files:**
-
-- `src/application/dto/generate-trip-response.dto.ts` — response type
-
-### Block 2 — Modify `POST /api/trips` to save full trip
-
-**~1.5h** ✅ COMPLETED
-
-- New DTO `SaveGeneratedTripDto` accepting `{ trip, flights, hotels, itinerary }`
-- New `SaveGeneratedTripUseCase` with Prisma `$transaction` for atomic save
-- New endpoint `POST /api/trips/save-generated` on TripsController
-- Register in TripsModule
-- 13 tests (validation + full save with flights/hotels/itinerary + minimal save)
-
-**Files created:**
-
-- `src/application/dto/save-generated-trip.dto.ts` — DTO with nested types
-- `src/application/use-cases/trips/save-generated-trip.use-case.ts` — Use case with Prisma transaction
-- `src/application/use-cases/trips/save-generated-trip.use-case.spec.ts` — 13 tests
-
-**Files modified:**
-
-- `src/presentation/controllers/trips.controller.ts` — new `POST /trips/save-generated` endpoint
-- `src/presentation/controllers/trips.controller.spec.ts` — updated constructor + mock
-- `src/infrastructure/trips/trips.module.ts` — registered SaveGeneratedTripUseCase
-
-- `src/application/dto/save-generated-trip.dto.ts` — DTO for full trip save
-
-### Block 3 — Clean up old recommendation endpoints (optional)
-
-**~0.5h** ✅ COMPLETED
-
-- Kept `/recommend/*` endpoints — useful for regenerating individual parts (just flights, just hotels, just itinerary)
-- No code changes needed
-
-## Response Shape
+**New response shape:**
 
 ```typescript
 interface GenerateTripResult {
@@ -84,28 +84,87 @@ interface GenerateTripResult {
     interests: string[];
     travelStyle: TravelStyle;
   };
-  flights: CreateFlightRecommendationData[];
-  hotels: CreateHotelRecommendationData[];
-  itinerary: {
-    days: Array<{
-      dayNumber: number;
-      title: string;
-      notes: string | null;
-      activities: MappedActivity[];
-    }>;
-  };
 }
+```
+
+**Code to remove from generate-trip.use-case.ts:**
+
+- `buildFlightsPrompt()` method
+- `buildHotelsPrompt()` method
+- `buildItineraryPrompt()` method
+- `Promise.all([flights, hotels, itinerary])` block
+- Flight/hotel/itinerary mapper imports
+- `flightRecommendationSchema`, `hotelRecommendationSchema`, `itinerarySchema` imports
+
+**Files:**
+
+- `src/application/use-cases/trips/generate-trip.use-case.ts`
+- `src/application/dto/generate-trip-response.dto.ts`
+- `src/presentation/controllers/trips.controller.ts`
+- `src/application/use-cases/trips/generate-trip.use-case.spec.ts`
+
+### Block 2 — No changes needed
+
+`POST /api/trips/save-generated` already works correctly. It accepts the full `SaveGeneratedTripDto` and saves in a transaction. No modifications needed.
+
+### Block 3 — No changes needed
+
+`POST /api/trips/:id/recommend/*` endpoints already exist and work. They accept tripId and generate recommendations via Gemini (1 call each). No modifications needed.
+
+## Frontend Flow (Reference)
+
+### Screen 1: Trip Generation (textarea)
+
+```
+User types prompt → POST /api/trips/generate → receives trip data
+→ Shows preview: title, destination, dates, budget, interests
+→ Button: "Guardar viaje"
+```
+
+### Screen 2: Save Trip
+
+```
+User clicks "Guardar" → POST /api/trips/save-generated → receives tripId
+→ Redirect to /trips/:tripId
+```
+
+### Screen 3: Trip Detail (tabs)
+
+```
+Tab "Vuelos" → POST /api/trips/:tripId/recommend/flights → shows flights
+Tab "Hoteles" → POST /api/trips/:tripId/recommend/hotels → shows hotels
+Tab "Itinerario" → POST /api/trips/:tripId/recommend/itinerary → shows itinerary
 ```
 
 ## Key Technical Decisions
 
-1. **4 parallel Gemini calls** (not one combined prompt) — more focused prompts, better accuracy, ~5s total
-2. **No DB interaction on generate** — pure AI response, frontend decides what to do with it
-3. **Prisma nested creates** for atomic save — all-or-nothing transaction
-4. **Existing `/recommend/*` endpoints stay** — useful for regenerating individual parts later
+1. **1 Gemini call per user action** — respects 5 RPM limit
+2. **No DB on generate** — pure AI preview, user decides to save
+3. **Existing `/recommend/*` endpoints handle recommendations** — no new code needed
+4. **Prisma transaction on save** — atomic save of trip data
+
+## Files Summary
+
+### Files to modify (Block 1)
+
+- `src/application/use-cases/trips/generate-trip.use-case.ts` — simplify to 1 call
+- `src/application/dto/generate-trip-response.dto.ts` — remove flights/hotels/itinerary
+- `src/presentation/controllers/trips.controller.ts` — update Swagger
+- `src/application/use-cases/trips/generate-trip.use-case.spec.ts` — update tests
+
+### Files unchanged (already working)
+
+- `src/application/dto/save-generated-trip.dto.ts` ✅
+- `src/application/use-cases/trips/save-generated-trip.use-case.ts` ✅
+- `src/application/use-cases/trips/save-generated-trip.use-case.spec.ts` ✅
+- `src/presentation/controllers/recommendations.controller.ts` ✅
+- `src/application/use-cases/recommendations/recommend-flights.use-case.ts` ✅
+- `src/application/use-cases/recommendations/recommend-hotels.use-case.ts` ✅
+- `src/application/use-cases/recommendations/recommend-itinerary.use-case.ts` ✅
 
 ## Status
 
-- [x] Block 1: Refactor generate endpoint (no DB) — DONE
-- [x] Block 2: Modify create endpoint to save full trip — DONE
-- [x] Block 3: Clean up (optional) — DONE (kept /recommend/* endpoints)
+- [ ] Block 1: Simplify generate endpoint (1 Gemini call)
+- [x] Block 2: Save-generated endpoint (already working)
+- [x] Block 3: Recommend endpoints (already working)
+- [ ] Verify: 0 TS errors, 0 lint, all tests passing
