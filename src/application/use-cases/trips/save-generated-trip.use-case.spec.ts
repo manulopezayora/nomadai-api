@@ -130,10 +130,9 @@ describe('SaveGeneratedTripUseCase', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    const PrismaServiceMock = PrismaService as jest.MockedClass<
-      typeof PrismaService
-    >;
-    prismaService = new PrismaServiceMock();
+    prismaService = new (
+      PrismaService as jest.MockedClass<typeof PrismaService>
+    )({} as never);
     useCase = new SaveGeneratedTripUseCase(prismaService);
   });
 

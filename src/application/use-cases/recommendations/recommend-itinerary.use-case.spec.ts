@@ -1,5 +1,6 @@
 import { NotFoundException } from '../../../domain/exceptions/not-found.exception';
 import { ForbiddenException } from '../../../domain/exceptions/forbidden.exception';
+import { ActivityCategory } from '../../../domain/enums/activity-category.enum';
 import { createMockTripRepository } from '../../../../test/mocks/trip-repository.mock';
 import { createMockDayPlanRepository } from '../../../../test/mocks/day-plan-repository.mock';
 import { createMockActivityRepository } from '../../../../test/mocks/activity-repository.mock';
@@ -97,7 +98,7 @@ describe('RecommendItineraryUseCase', () => {
         endTime: '12:00',
         cost: 0,
         bookingUrl: null,
-        category: 'culture',
+        category: ActivityCategory.CULTURE,
         placeId: null,
         order: 1,
         createdAt: new Date(),
