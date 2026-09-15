@@ -12,7 +12,7 @@ export const envValidationSchema = Joi.object({
     then: Joi.required(),
     otherwise: Joi.string().allow('').optional(),
   }),
-  GEMINI_MODEL: Joi.string().default('gemini-2.5-flash'),
+  GEMINI_MODEL: Joi.string().default('gemini-3.6-flash'),
   PORT: Joi.number().default(3000),
   CORS_ORIGINS: Joi.string().default('http://localhost:5173'),
   COOKIE_SECURE: Joi.boolean().default(false),

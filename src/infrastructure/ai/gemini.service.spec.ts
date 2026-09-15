@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
 import { GeminiService } from './gemini.service';
+import { GeminiServiceException } from '../../domain/exceptions/gemini-service.exception';
 
 const mockGenerateContent = jest.fn();
 
@@ -18,7 +19,10 @@ describe('GeminiService', () => {
 
   beforeEach(() => {
     configService = {
-      get: jest.fn().mockReturnValue('test-api-key'),
+      get: jest.fn().mockImplementation((key: string) => {
+        if (key === 'GEMINI_MODEL') return 'gemini-3.6-flash';
+        return 'test-api-key';
+      }),
       getOrThrow: jest.fn().mockReturnValue('test-api-key'),
     } as unknown as jest.Mocked<ConfigService>;
 
@@ -27,7 +31,15 @@ describe('GeminiService', () => {
   });
 
   describe('onModuleInit', () => {
-    it('should initialize the SDK with API key', () => {
+    it('should initialize the SDK with API key and model from config', () => {
+      service.onModuleInit();
+
+      expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: 'test-api-key' });
+    });
+
+    it('should default to gemini-3.6-flash when GEMINI_MODEL is not set', () => {
+      configService.get.mockReturnValue(undefined);
+
       service.onModuleInit();
 
       expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: 'test-api-key' });
@@ -52,7 +64,7 @@ describe('GeminiService', () => {
       await service.generateStructuredOutput('Test prompt', testSchema);
 
       expect(mockGenerateContent).toHaveBeenCalledWith({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.6-flash',
         contents: 'Test prompt',
         config: {
           responseMimeType: 'application/json',
@@ -76,12 +88,12 @@ describe('GeminiService', () => {
       expect(result).toEqual(expected);
     });
 
-    it('should throw when response is empty', async () => {
+    it('should throw GeminiServiceException when response is empty', async () => {
       mockGenerateContent.mockResolvedValue({ text: undefined });
 
       await expect(
         service.generateStructuredOutput('prompt', testSchema),
-      ).rejects.toThrow('Gemini returned empty response');
+      ).rejects.toThrow(GeminiServiceException);
     });
 
     it('should throw on invalid JSON response', async () => {
@@ -90,6 +102,59 @@ describe('GeminiService', () => {
       await expect(
         service.generateStructuredOutput('prompt', testSchema),
       ).rejects.toThrow();
+    });
+
+    it('should map 404 to GEMINI_MODEL_NOT_FOUND', async () => {
+      mockGenerateContent.mockRejectedValue({
+        status: 'NOT_FOUND',
+        message: 'Model not found',
+      });
+
+      await expect(
+        service.generateStructuredOutput('prompt', testSchema),
+      ).rejects.toThrow(GeminiServiceException);
+
+      try {
+        await service.generateStructuredOutput('prompt', testSchema);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GeminiServiceException);
+        expect((error as GeminiServiceException).code).toBe(
+          'GEMINI_MODEL_NOT_FOUND',
+        );
+        expect((error as GeminiServiceException).statusCode).toBe(502);
+      }
+    });
+
+    it('should map 429 to GEMINI_RATE_LIMITED', async () => {
+      mockGenerateContent.mockRejectedValue({
+        status: 'RESOURCE_EXHAUSTED',
+        message: 'Rate limit exceeded',
+      });
+
+      try {
+        await service.generateStructuredOutput('prompt', testSchema);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GeminiServiceException);
+        expect((error as GeminiServiceException).code).toBe(
+          'GEMINI_RATE_LIMITED',
+        );
+      }
+    });
+
+    it('should map 401 to GEMINI_AUTH_ERROR', async () => {
+      mockGenerateContent.mockRejectedValue({
+        status: 'UNAUTHENTICATED',
+        message: 'Invalid API key',
+      });
+
+      try {
+        await service.generateStructuredOutput('prompt', testSchema);
+      } catch (error) {
+        expect(error).toBeInstanceOf(GeminiServiceException);
+        expect((error as GeminiServiceException).code).toBe(
+          'GEMINI_AUTH_ERROR',
+        );
+      }
     });
   });
 });
