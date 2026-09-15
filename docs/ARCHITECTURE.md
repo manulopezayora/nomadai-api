@@ -556,7 +556,7 @@ GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 
 # Google Gemini
 GEMINI_API_KEY=""
-GEMINI_MODEL="gemini-2.5-flash"
+GEMINI_MODEL="gemini-3.6-flash"
 
 # App
 PORT=3000
