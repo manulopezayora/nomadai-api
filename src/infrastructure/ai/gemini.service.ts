@@ -90,6 +90,13 @@ export class GeminiService extends GeminiPort implements OnModuleInit {
             'GEMINI_AUTH_ERROR',
             'Invalid Gemini API key. Check GEMINI_API_KEY env var.',
           );
+        case 'UNAVAILABLE':
+        case 503:
+          throw new GeminiServiceException(
+            'GEMINI_UNAVAILABLE',
+            'Gemini is temporarily unavailable due to high demand. Please try again later.',
+            503,
+          );
         default:
           throw new GeminiServiceException(
             'GEMINI_INTERNAL_ERROR',
