@@ -8,16 +8,6 @@ import {
   TripPromptMapper,
   GeminiTripPromptResponse,
 } from '../../../shared/ai/trip-prompt.mapper';
-import { flightRecommendationSchema } from '../../../shared/ai/flight.schema';
-import { FlightRecommendationMapper } from '../../../shared/ai/flight-recommendation.mapper';
-import { hotelRecommendationSchema } from '../../../shared/ai/hotel.schema';
-import { HotelRecommendationMapper } from '../../../shared/ai/hotel-recommendation.mapper';
-import { itinerarySchema } from '../../../shared/ai/itinerary.schema';
-import {
-  ItineraryMapper,
-  ItineraryResponse,
-} from '../../../shared/ai/itinerary.mapper';
-import { TravelStyle } from '../../../domain/enums/travel-style.enum';
 
 @Injectable()
 export class GenerateTripUseCase {
@@ -64,44 +54,6 @@ export class GenerateTripUseCase {
 
     const startDateStr = mapped.startDate.toISOString().split('T')[0];
     const endDateStr = mapped.endDate.toISOString().split('T')[0];
-    const days = Math.ceil(
-      (mapped.endDate.getTime() - mapped.startDate.getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
-
-    this.logger.debug(
-      `Generating flights, hotels and itinerary in parallel for ${days} days`,
-    );
-
-    const [flightsResponse, hotelsResponse, itineraryResponse] =
-      await Promise.all([
-        this.gemini.generateStructuredOutput<unknown>(
-          this.buildFlightsPrompt(mapped, days),
-          flightRecommendationSchema,
-        ),
-        this.gemini.generateStructuredOutput<unknown>(
-          this.buildHotelsPrompt(mapped, days),
-          hotelRecommendationSchema,
-        ),
-        this.gemini.generateStructuredOutput<ItineraryResponse>(
-          this.buildItineraryPrompt(mapped, days),
-          itinerarySchema,
-        ),
-      ]);
-
-    const flights =
-      FlightRecommendationMapper.toCreateDataArray(flightsResponse);
-    const hotels = HotelRecommendationMapper.toCreateDataArray(hotelsResponse);
-    const itineraryDays = ItineraryMapper.toDayPlans(itineraryResponse);
-    const itineraryActivities = ItineraryMapper.toActivities(itineraryResponse);
-
-    const daysWithActivities = itineraryDays.map((day) => ({
-      ...day,
-      notes: day.notes ?? null,
-      activities: itineraryActivities.filter(
-        (a) => a.dayNumber === day.dayNumber,
-      ),
-    }));
 
     return {
       trip: {
@@ -114,9 +66,6 @@ export class GenerateTripUseCase {
         interests: mapped.interests,
         travelStyle: mapped.travelStyle,
       },
-      flights,
-      hotels,
-      itinerary: { days: daysWithActivities },
     };
   }
 
@@ -138,135 +87,5 @@ Extract and infer:
 Current date: ${new Date().toISOString().split('T')[0]}
 
 Return a valid JSON object matching the schema.`;
-  }
-
-  private buildFlightsPrompt(
-    trip: {
-      destination: string;
-      travelerCount: number;
-      travelStyle: TravelStyle;
-      startDate: Date;
-      endDate: Date;
-    },
-    days: number,
-  ): string {
-    const startDateStr = trip.startDate.toISOString().split('T')[0];
-    const endDateStr = trip.endDate.toISOString().split('T')[0];
-    return `Recommend ${trip.travelerCount} flight option(s) to ${trip.destination}.
-
-Trip details:
-- Destination: ${trip.destination}
-- Duration: ${days} days
-- Travelers: ${trip.travelerCount}
-- Travel style: ${trip.travelStyle}
-- Departure date: ${startDateStr}
-- Return date: ${endDateStr}
-
-For each flight, provide:
-- airline (name)
-- origin (IATA code — infer a major airport near the user's region, e.g. MAD for Europe)
-- destination (IATA code)
-- departureDate (YYYY-MM-DD)
-- departureTime (HH:MM UTC)
-- arrivalTime (HH:MM local)
-- price (estimated in EUR)
-- currency (EUR)
-- class (economy/premium_economy/business/first)
-- stops (number)
-- durationMinutes (total)
-- bookingUrl (a generic search URL like https://www.google.com/flights)
-
-Return 2-3 realistic options with varying price ranges.`;
-  }
-
-  private buildHotelsPrompt(
-    trip: {
-      destination: string;
-      travelerCount: number;
-      budget: number | null;
-      travelStyle: TravelStyle;
-      startDate: Date;
-      endDate: Date;
-    },
-    days: number,
-  ): string {
-    const startDateStr = trip.startDate.toISOString().split('T')[0];
-    const endDateStr = trip.endDate.toISOString().split('T')[0];
-    return `Recommend hotel options in ${trip.destination} for a trip.
-
-Trip details:
-- Destination: ${trip.destination}
-- Duration: ${days} days
-- Travelers: ${trip.travelerCount}
-- Travel style: ${trip.travelStyle}
-- Total budget: ${trip.budget ? `${trip.budget} EUR` : 'not specified'}
-- Check-in: ${startDateStr}
-- Check-out: ${endDateStr}
-
-For each hotel, provide:
-- name
-- neighborhood (district or area name)
-- city
-- country
-- latitude
-- longitude
-- pricePerNight (discounted or current price in EUR)
-- originalPricePerNight (original price before discount, if applicable; otherwise same as pricePerNight)
-- currency (EUR)
-- starRating (1-5)
-- reviewCount (estimated number of reviews)
-- amenities (list)
-- imageUrl (a real photo URL from the hotel's website or Google Maps)
-- bookingUrl (a generic search URL like https://www.booking.com)
-
-Return 3-4 realistic options with varying price ranges.`;
-  }
-
-  private buildItineraryPrompt(
-    trip: {
-      destination: string;
-      startDate: Date;
-      endDate: Date;
-      travelerCount: number;
-      budget: number | null;
-      interests: string[];
-      travelStyle: TravelStyle;
-    },
-    days: number,
-  ): string {
-    const startDateStr = trip.startDate.toISOString().split('T')[0];
-    const endDateStr = trip.endDate.toISOString().split('T')[0];
-    return `Create a detailed ${days}-day itinerary for a trip to ${trip.destination}.
-
-Trip details:
-- Destination: ${trip.destination}
-- Start date: ${startDateStr}
-- End date: ${endDateStr}
-- Duration: ${days} days
-- Travelers: ${trip.travelerCount}
-- Budget: ${trip.budget ? `${trip.budget} EUR total` : 'not specified'}
-- Travel style: ${trip.travelStyle}
-- Interests: ${trip.interests.join(', ')}
-
-For each day, provide:
-- dayNumber (1-based)
-- title (short catchy title)
-- summary (brief overview of the day)
-
-For each activity within a day, provide:
-- title
-- description
-- category (one of: sightseeing, food, culture, adventure, relaxation, shopping, nightlife, transport, stay, flight, other)
-- startTime (HH:MM)
-- endTime (HH:MM)
-- locationName
-- latitude
-- longitude
-- costEstimate (in EUR)
-- tips (helpful travel tips)
-
-Include a mix of activities that match the traveler's interests and travel style.
-Include realistic coordinates for locations in ${trip.destination}.
-Spread activities throughout each day with reasonable time blocks.`;
   }
 }

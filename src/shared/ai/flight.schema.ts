@@ -30,7 +30,7 @@ export const flightRecommendationSchema = {
             description: 'Arrival time (HH:MM local)',
           },
           price: { type: 'number', minimum: 0, description: 'Price in EUR' },
-          currency: { type: 'string', default: 'USD' },
+          currency: { type: 'string', default: 'EUR' },
           class: {
             type: 'string',
             enum: ['economy', 'premium_economy', 'business', 'first'],

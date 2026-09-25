@@ -65,10 +65,9 @@ export class TripsController {
 
   @Post('generate')
   @ApiOperation({
-    summary:
-      'Generate a complete trip with flights, hotels and itinerary using AI',
+    summary: 'Generate trip preview from natural language prompt using AI',
     description:
-      'Generates trip data, flight recommendations, hotel recommendations and a day-by-day itinerary from a natural language prompt. Returns all data without saving to DB. Use POST /trips to save.',
+      'Parses a natural language prompt and returns trip data (title, destination, dates, preferences). Returns preview without saving to DB. Use POST /trips/save-generated to persist, then POST /trips/:id/recommend/* for flights, hotels and itinerary.',
   })
   @ApiBody({
     schema: {
@@ -85,8 +84,7 @@ export class TripsController {
   })
   @ApiResponse({
     status: 201,
-    description:
-      'Trip generated with flights, hotels and itinerary (not saved to DB)',
+    description: 'Trip preview generated (not saved to DB)',
   })
   @ApiResponse({ status: 400, description: 'Invalid prompt' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
