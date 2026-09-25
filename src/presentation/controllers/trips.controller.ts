@@ -21,6 +21,9 @@ import {
 } from '@nestjs/swagger';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GenerateTripUseCase } from '../../application/use-cases/trips/generate-trip.use-case';
+import { GenerateItineraryPreviewUseCase } from '../../application/use-cases/trips/generate-itinerary-preview.use-case';
+import { GenerateFlightsPreviewUseCase } from '../../application/use-cases/trips/generate-flights-preview.use-case';
+import { GenerateHotelsPreviewUseCase } from '../../application/use-cases/trips/generate-hotels-preview.use-case';
 import { SaveGeneratedTripUseCase } from '../../application/use-cases/trips/save-generated-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
@@ -29,6 +32,9 @@ import { UpdateTripUseCase } from '../../application/use-cases/trips/update-trip
 import { DeleteTripUseCase } from '../../application/use-cases/trips/delete-trip.use-case';
 import { CreateTripDto } from '../../application/dto/create-trip.dto';
 import { GenerateTripDto } from '../../application/dto/generate-trip.dto';
+import { GenerateItineraryDto } from '../../application/dto/generate-itinerary.dto';
+import { GenerateFlightsDto } from '../../application/dto/generate-flights.dto';
+import { GenerateHotelsDto } from '../../application/dto/generate-hotels.dto';
 import { SaveGeneratedTripDto } from '../../application/dto/save-generated-trip.dto';
 import { UpdateTripDto } from '../../application/dto/update-trip.dto';
 import { PaginationDto } from '../../application/dto/pagination.dto';
@@ -49,6 +55,12 @@ export class TripsController {
     private readonly createTripUseCase: CreateTripUseCase,
     @Inject(GenerateTripUseCase)
     private readonly generateTripUseCase: GenerateTripUseCase,
+    @Inject(GenerateItineraryPreviewUseCase)
+    private readonly generateItineraryPreviewUseCase: GenerateItineraryPreviewUseCase,
+    @Inject(GenerateFlightsPreviewUseCase)
+    private readonly generateFlightsPreviewUseCase: GenerateFlightsPreviewUseCase,
+    @Inject(GenerateHotelsPreviewUseCase)
+    private readonly generateHotelsPreviewUseCase: GenerateHotelsPreviewUseCase,
     @Inject(SaveGeneratedTripUseCase)
     private readonly saveGeneratedTripUseCase: SaveGeneratedTripUseCase,
     @Inject(GetTripUseCase)
@@ -67,7 +79,7 @@ export class TripsController {
   @ApiOperation({
     summary: 'Generate trip preview from natural language prompt using AI',
     description:
-      'Parses a natural language prompt and returns trip data (title, destination, dates, preferences). Returns preview without saving to DB. Use POST /trips/save-generated to persist, then POST /trips/:id/recommend/* for flights, hotels and itinerary.',
+      'Parses a natural language prompt and returns trip data (title, destination, dates, preferences). Returns preview without saving to DB.',
   })
   @ApiBody({
     schema: {
@@ -94,6 +106,185 @@ export class TripsController {
     @Body() dto: GenerateTripDto,
   ) {
     return this.generateTripUseCase.execute(dto);
+  }
+
+  @Post('generate-itinerary')
+  @ApiOperation({
+    summary: 'Generate itinerary preview without saving to DB',
+    description:
+      'Generates a day-by-day itinerary from trip data. Returns preview without persisting. Use POST /trips/save-generated to save.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['trip'],
+      properties: {
+        trip: {
+          type: 'object',
+          required: [
+            'title',
+            'destination',
+            'startDate',
+            'endDate',
+            'interests',
+            'travelStyle',
+            'travelerCount',
+          ],
+          properties: {
+            title: { type: 'string', example: '5 Days in Rome' },
+            destination: { type: 'string', example: 'Rome' },
+            startDate: { type: 'string', example: '2026-10-01' },
+            endDate: { type: 'string', example: '2026-10-06' },
+            interests: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['culture', 'food'],
+            },
+            travelStyle: {
+              type: 'string',
+              enum: ['budget', 'mid', 'luxury'],
+              example: 'mid',
+            },
+            travelerCount: { type: 'number', example: 1 },
+            budget: { type: 'number', nullable: true, example: null },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Itinerary preview generated (not saved to DB)',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid trip data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 502, description: 'AI service error' })
+  async generateItinerary(@Body() dto: GenerateItineraryDto) {
+    return this.generateItineraryPreviewUseCase.execute(dto);
+  }
+
+  @Post('generate-flights')
+  @ApiOperation({
+    summary: 'Generate flight preview without saving to DB',
+    description:
+      'Generates flight options from trip data and departure hint. Returns preview without persisting.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['trip', 'departureHint', 'departureDate'],
+      properties: {
+        trip: {
+          type: 'object',
+          required: [
+            'title',
+            'destination',
+            'startDate',
+            'endDate',
+            'interests',
+            'travelStyle',
+            'travelerCount',
+          ],
+          properties: {
+            title: { type: 'string', example: '5 Days in Rome' },
+            destination: { type: 'string', example: 'Rome' },
+            startDate: { type: 'string', example: '2026-10-01' },
+            endDate: { type: 'string', example: '2026-10-06' },
+            interests: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['culture', 'food'],
+            },
+            travelStyle: { type: 'string', example: 'mid' },
+            travelerCount: { type: 'number', example: 1 },
+            budget: { type: 'number', nullable: true, example: null },
+          },
+        },
+        departureHint: {
+          type: 'string',
+          example: 'Madrid',
+          description: 'City or airport name. Gemini will infer the IATA code.',
+        },
+        departureDate: { type: 'string', example: '2026-10-01' },
+        returnDate: { type: 'string', example: '2026-10-06' },
+        passengers: { type: 'number', example: 1 },
+        travelClass: {
+          type: 'string',
+          enum: ['economy', 'premium_economy', 'business', 'first'],
+          example: 'economy',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Flight options generated (not saved to DB)',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid params' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 502, description: 'AI service error' })
+  async generateFlights(@Body() dto: GenerateFlightsDto) {
+    return this.generateFlightsPreviewUseCase.execute(dto);
+  }
+
+  @Post('generate-hotels')
+  @ApiOperation({
+    summary: 'Generate hotel preview without saving to DB',
+    description:
+      'Generates hotel options from trip data. Returns preview without persisting.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['trip', 'checkIn', 'checkOut'],
+      properties: {
+        trip: {
+          type: 'object',
+          required: [
+            'title',
+            'destination',
+            'startDate',
+            'endDate',
+            'interests',
+            'travelStyle',
+            'travelerCount',
+          ],
+          properties: {
+            title: { type: 'string', example: '5 Days in Rome' },
+            destination: { type: 'string', example: 'Rome' },
+            startDate: { type: 'string', example: '2026-10-01' },
+            endDate: { type: 'string', example: '2026-10-06' },
+            interests: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['culture', 'food'],
+            },
+            travelStyle: { type: 'string', example: 'mid' },
+            travelerCount: { type: 'number', example: 1 },
+            budget: { type: 'number', nullable: true, example: null },
+          },
+        },
+        checkIn: { type: 'string', example: '2026-10-01' },
+        checkOut: { type: 'string', example: '2026-10-06' },
+        maxPricePerNight: { type: 'number', example: 150 },
+        minRating: { type: 'number', example: 4 },
+        amenities: {
+          type: 'array',
+          items: { type: 'string' },
+          example: ['wifi', 'breakfast'],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Hotel options generated (not saved to DB)',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid params' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 502, description: 'AI service error' })
+  async generateHotels(@Body() dto: GenerateHotelsDto) {
+    return this.generateHotelsPreviewUseCase.execute(dto);
   }
 
   @Post()

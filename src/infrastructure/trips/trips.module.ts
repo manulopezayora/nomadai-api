@@ -5,6 +5,9 @@ import { PrismaTripRepository } from '../database/repositories/prisma-trip.repos
 import { TripRepositoryPort } from '../../domain/ports/repositories/trip.repository.port';
 import { CreateTripUseCase } from '../../application/use-cases/trips/create-trip.use-case';
 import { GenerateTripUseCase } from '../../application/use-cases/trips/generate-trip.use-case';
+import { GenerateItineraryPreviewUseCase } from '../../application/use-cases/trips/generate-itinerary-preview.use-case';
+import { GenerateFlightsPreviewUseCase } from '../../application/use-cases/trips/generate-flights-preview.use-case';
+import { GenerateHotelsPreviewUseCase } from '../../application/use-cases/trips/generate-hotels-preview.use-case';
 import { SaveGeneratedTripUseCase } from '../../application/use-cases/trips/save-generated-trip.use-case';
 import { GetTripUseCase } from '../../application/use-cases/trips/get-trip.use-case';
 import { ListTripsUseCase } from '../../application/use-cases/trips/list-trips.use-case';
@@ -20,6 +23,9 @@ import { TripsController } from '../../presentation/controllers/trips.controller
     { provide: TripRepositoryPort, useClass: PrismaTripRepository },
     CreateTripUseCase,
     GenerateTripUseCase,
+    GenerateItineraryPreviewUseCase,
+    GenerateFlightsPreviewUseCase,
+    GenerateHotelsPreviewUseCase,
     SaveGeneratedTripUseCase,
     GetTripUseCase,
     ListTripsUseCase,
