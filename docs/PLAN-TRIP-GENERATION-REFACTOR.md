@@ -6,9 +6,9 @@ Gemini free tier allows **5 RPM**. The previous implementation (`POST /trips/gen
 
 ## Current State
 
-- `POST /api/trips/generate` — makes 4 parallel Gemini calls → returns trip + flights + hotels + itinerary
+- `POST /api/trips/generate` — makes 1 Gemini call → returns trip preview only
 - `POST /api/trips/save-generated` — saves everything to DB in a transaction
-- `POST /api/trips/:id/recommend/flights|hotels|itinerary` — existing endpoints (not used in generate flow)
+- `POST /api/trips/:id/recommend/flights|hotels|itinerary` — 1 Gemini call each, used per tab
 
 ## Desired Flow (Option C)
 
@@ -164,7 +164,7 @@ Tab "Itinerario" → POST /api/trips/:tripId/recommend/itinerary → shows itine
 
 ## Status
 
-- [ ] Block 1: Simplify generate endpoint (1 Gemini call)
-- [x] Block 2: Save-generated endpoint (already working)
-- [x] Block 3: Recommend endpoints (already working)
-- [ ] Verify: 0 TS errors, 0 lint, all tests passing
+- [x] Block 1: Simplify generate endpoint (1 Gemini call) — DONE
+- [x] Block 2: Save-generated endpoint (already working) — DONE
+- [x] Block 3: Recommend endpoints (already working) — DONE
+- [x] Verify: 0 TS errors, 0 lint, all tests passing — DONE

@@ -309,15 +309,19 @@ const apiClient = axios.create({
 
 ### Trips
 
-| Método | Ruta               | Descripción                                         | Auth  |
-| ------ | ------------------ | --------------------------------------------------- | ----- |
-| POST   | `/trips`           | Crear viaje                                         | Sí    |
-| POST   | `/trips/generate`  | Generar viaje desde prompt en lenguaje natural (IA) | Sí    |
-| GET    | `/trips`           | Listar viajes del usuario (paginado)                | Sí    |
-| GET    | `/trips/admin/all` | Listar todos los viajes (solo ADMIN)                | ADMIN |
-| GET    | `/trips/:id`       | Detalle de viaje con días y actividades             | Sí    |
-| PATCH  | `/trips/:id`       | Actualizar viaje                                    | Sí    |
-| DELETE | `/trips/:id`       | Eliminar viaje (cascade)                            | Sí    |
+| Método | Ruta                             | Descripción                                        | Auth  |
+| ------ | -------------------------------- | -------------------------------------------------- | ----- |
+| POST   | `/trips`                         | Crear viaje                                        | Sí    |
+| POST   | `/trips/generate`                | Generar preview de viaje desde prompt (1 call IA)  | Sí    |
+| POST   | `/trips/save-generated`          | Guardar viaje generado en BD (transacción)         | Sí    |
+| GET    | `/trips`                         | Listar viajes del usuario (paginado)               | Sí    |
+| GET    | `/trips/admin/all`               | Listar todos los viajes (solo ADMIN)               | ADMIN |
+| GET    | `/trips/:id`                     | Detalle de viaje con días y actividades            | Sí    |
+| PATCH  | `/trips/:id`                     | Actualizar viaje                                   | Sí    |
+| DELETE | `/trips/:id`                     | Eliminar viaje (cascade)                           | Sí    |
+| POST   | `/trips/:id/recommend/flights`   | Generar recomendaciones de vuelos con IA (1 call)  | Sí    |
+| POST   | `/trips/:id/recommend/hotels`    | Generar recomendaciones de hoteles con IA (1 call) | Sí    |
+| POST   | `/trips/:id/recommend/itinerary` | Generar itinerario día a día con IA (1 call)       | Sí    |
 
 ### Day Plans
 
@@ -852,7 +856,8 @@ Database
 - `GET /users` — Listar usuarios (solo ADMIN, paginado)
 - `PATCH /users/:id` — Actualizar perfil (propio o admin, con reglas de negocio)
 - `POST /trips` — Crear viaje
-- `POST /trips/generate` — Generar viaje desde prompt en lenguaje natural con Gemini
+- `POST /trips/generate` — Generar preview de viaje desde prompt (1 Gemini call, sin save)
+- `POST /trips/save-generated` — Guardar viaje generado en BD (transacción atómica)
 - `GET /trips` — Listar viajes del usuario (paginado)
 - `GET /trips/admin/all` — Listar todos los viajes (solo ADMIN, paginado)
 - `GET /trips/:id` — Detalle de viaje con dayPlans y activities anidadas (solo propietario o admin)
