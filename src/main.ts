@@ -25,10 +25,12 @@ async function bootstrap(): Promise<void> {
 
   app.useGlobalFilters(new DomainExceptionFilter());
 
+  // NOTE: whitelist/forbidNonWhitelisted are intentionally disabled. DTOs that
+  // are documentation-only would have every property stripped or rejected,
+  // breaking the generate*/save-generated endpoints. Real validation lives in
+  // the use cases, per the project guidelines.
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
     }),
   );

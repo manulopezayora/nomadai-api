@@ -1,4 +1,5 @@
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { ActivityCategory } from '../../../domain/enums/activity-category.enum';
 import { SaveGeneratedTripDto } from '../../dto/save-generated-trip.dto';
 
 const mockTrip = {
@@ -119,7 +120,7 @@ describe('SaveGeneratedTripUseCase', () => {
               startTime: '07:00',
               endTime: '09:00',
               cost: 30,
-              category: 'transport',
+              category: ActivityCategory.TRANSPORT,
               order: 1,
             },
           ],

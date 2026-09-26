@@ -7,6 +7,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma/prisma.se
 import { SaveGeneratedTripDto } from '../../dto/save-generated-trip.dto';
 import { Trip } from '../../../domain/entities/trip.entity';
 import { ValidationException } from '../../../domain/exceptions/validation.exception';
+import { ActivityCategory } from '../../../domain/enums/activity-category.enum';
 import { TravelStyle } from '../../../domain/enums/travel-style.enum';
 import { TripMapper } from '../../../infrastructure/database/prisma/mappers/trip.mapper';
 
@@ -119,7 +120,7 @@ export class SaveGeneratedTripUseCase {
                 endTime: a.endTime ?? null,
                 cost: a.cost ?? null,
                 bookingUrl: a.bookingUrl ?? null,
-                category: a.category ?? 'other',
+                category: a.category ?? ActivityCategory.OTHER,
                 order: a.order ?? index + 1,
               })),
             });

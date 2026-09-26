@@ -1,23 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber, Min } from 'class-validator';
-import { TravelStyle } from '../../domain/enums/travel-style.enum';
+import { Type } from 'class-transformer';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
-export interface GenerateHotelsTripData {
-  title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  interests: string[];
-  travelStyle: TravelStyle;
-  travelerCount: number;
-  budget: number | null;
-}
+import { GeneratedTripDataDto } from './generated-trip-data.dto';
 
 export class GenerateHotelsDto {
   @ApiProperty({
     description: 'Trip data from POST /trips/generate',
+    type: GeneratedTripDataDto,
   })
-  trip!: GenerateHotelsTripData;
+  @ValidateNested()
+  @Type(() => GeneratedTripDataDto)
+  trip!: GeneratedTripDataDto;
 
   @ApiProperty({
     example: '2026-10-01',
@@ -56,6 +56,8 @@ export class GenerateHotelsDto {
   @ApiPropertyOptional({
     example: ['wifi', 'breakfast'],
     description: 'Desired amenities',
+    isArray: true,
+    type: String,
   })
   @IsString({ each: true })
   @IsOptional()

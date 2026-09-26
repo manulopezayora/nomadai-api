@@ -43,6 +43,8 @@ import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { UserRole } from '../../domain/enums/user-role.enum';
+import { TravelStyle } from '../../domain/enums/travel-style.enum';
+import { ActivityCategory } from '../../domain/enums/activity-category.enum';
 import type { UserPayload } from '../../shared/types/user-payload';
 
 @ApiTags('Trips')
@@ -335,23 +337,70 @@ export class TripsController {
         destination: { type: 'string', example: 'Japan' },
         startDate: { type: 'string', example: '2026-09-15' },
         endDate: { type: 'string', example: '2026-09-25' },
-        budget: { type: 'number', example: 5000 },
-        travelerCount: { type: 'number', example: 2 },
+        budget: { type: 'number', nullable: true, example: 5000 },
+        travelerCount: {
+          type: 'number',
+          example: 2,
+          default: 1,
+          minimum: 1,
+        },
         interests: {
           type: 'array',
           items: { type: 'string' },
           example: ['culture', 'food'],
         },
-        travelStyle: { type: 'string', enum: ['budget', 'mid', 'luxury'] },
+        travelStyle: {
+          type: 'string',
+          enum: Object.values(TravelStyle),
+          example: TravelStyle.MID,
+        },
         flights: {
           type: 'array',
           items: {
             type: 'object',
+            required: [
+              'airline',
+              'departure',
+              'arrival',
+              'departureTime',
+              'arrivalTime',
+            ],
             properties: {
-              airline: { type: 'string' },
-              origin: { type: 'string' },
-              destination: { type: 'string' },
-              price: { type: 'number' },
+              airline: { type: 'string', example: 'Iberia' },
+              flightNumber: {
+                type: 'string',
+                nullable: true,
+                example: 'IB3437',
+              },
+              departure: {
+                type: 'string',
+                example: 'MAD',
+                description: 'Departure airport (IATA)',
+              },
+              arrival: {
+                type: 'string',
+                example: 'FCO',
+                description: 'Arrival airport (IATA)',
+              },
+              departureDate: {
+                type: 'string',
+                nullable: true,
+                example: '2026-09-15',
+              },
+              departureTime: { type: 'string', example: '08:30' },
+              arrivalTime: { type: 'string', example: '11:45' },
+              price: { type: 'number', nullable: true, example: 120 },
+              currency: { type: 'string', example: 'EUR' },
+              class: {
+                type: 'string',
+                nullable: true,
+                enum: ['economy', 'premium_economy', 'business', 'first'],
+              },
+              stops: { type: 'number', nullable: true, example: 0 },
+              durationMinutes: { type: 'number', nullable: true, example: 195 },
+              bookingUrl: { type: 'string', nullable: true, example: null },
+              notes: { type: 'string', nullable: true, example: null },
+              isRecommended: { type: 'boolean', example: true },
             },
           },
         },
@@ -359,24 +408,85 @@ export class TripsController {
           type: 'array',
           items: {
             type: 'object',
+            required: ['name', 'location'],
             properties: {
-              name: { type: 'string' },
-              city: { type: 'string' },
-              pricePerNight: { type: 'number' },
+              name: { type: 'string', example: 'Hotel de Roma' },
+              location: { type: 'string', example: 'Via del Corso 9, Rome' },
+              neighborhood: {
+                type: 'string',
+                nullable: true,
+                example: 'Centro Storico',
+              },
+              latitude: { type: 'number', nullable: true, example: 41.8992 },
+              longitude: { type: 'number', nullable: true, example: 12.4853 },
+              pricePerNight: { type: 'number', nullable: true, example: 150 },
+              originalPricePerNight: {
+                type: 'number',
+                nullable: true,
+                example: 180,
+              },
+              currency: { type: 'string', example: 'EUR' },
+              rating: { type: 'number', nullable: true, example: 4 },
+              reviewCount: { type: 'number', nullable: true, example: 1204 },
+              amenities: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['wifi', 'breakfast'],
+              },
+              imageUrl: { type: 'string', nullable: true, example: null },
+              bookingUrl: { type: 'string', nullable: true, example: null },
+              isRecommended: { type: 'boolean', example: true },
             },
           },
         },
         itinerary: {
           type: 'object',
+          required: ['days'],
           properties: {
             days: {
               type: 'array',
               items: {
                 type: 'object',
+                required: ['dayNumber', 'title'],
                 properties: {
-                  dayNumber: { type: 'number' },
-                  title: { type: 'string' },
-                  activities: { type: 'array' },
+                  dayNumber: { type: 'number', example: 1 },
+                  title: { type: 'string', example: 'Ancient Rome' },
+                  notes: { type: 'string', nullable: true, example: null },
+                  activities: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      required: ['title'],
+                      properties: {
+                        title: {
+                          type: 'string',
+                          example: 'Colosseum visit',
+                        },
+                        description: { type: 'string', nullable: true },
+                        location: { type: 'string', nullable: true },
+                        latitude: { type: 'number', nullable: true },
+                        longitude: { type: 'number', nullable: true },
+                        startTime: {
+                          type: 'string',
+                          nullable: true,
+                          example: '10:00',
+                        },
+                        endTime: {
+                          type: 'string',
+                          nullable: true,
+                          example: '12:00',
+                        },
+                        cost: { type: 'number', nullable: true, example: 18 },
+                        bookingUrl: { type: 'string', nullable: true },
+                        category: {
+                          type: 'string',
+                          nullable: true,
+                          enum: Object.values(ActivityCategory),
+                        },
+                        order: { type: 'number', example: 1 },
+                      },
+                    },
+                  },
                 },
               },
             },
