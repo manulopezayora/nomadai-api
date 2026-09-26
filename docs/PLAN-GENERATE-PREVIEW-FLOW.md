@@ -1,5 +1,11 @@
 # Plan: Generate Preview Flow — "Todo local hasta el final"
 
+> **STATUS: IMPLEMENTADO.** Este es el flujo vigente.
+> Endpoints: `POST /trips/generate`, `/generate-itinerary`, `/generate-flights`,
+> `/generate-hotels` (1 Gemini call cada uno, ninguno persiste) y
+> `POST /trips/save-generated` (0 llamadas de IA, una única transacción).
+> Los endpoints legacy `POST /trips/:tripId/recommend/*` fueron eliminados.
+
 ## Problem
 
 El flujo actual de generate hace 4 llamadas Gemini (trip + flights + hotels + itinerary) y las guarda directamente en BD. El usuario quiere un flujo donde:
@@ -268,7 +274,7 @@ El flujo actual de generate hace 4 llamadas Gemini (trip + flights + hotels + it
 **Pattern:** Each use case:
 
 - Injects only `GeminiPort` (no repositories)
-- Reuses prompts from existing recommend use cases
+- Reuses the prompts that lived in the now-removed recommend use cases
 - Reuses mappers from `shared/ai/`
 - Returns mapped data without DB save
 
@@ -317,13 +323,16 @@ pnpm test            # all passing
 
 - All `shared/ai/*.mapper.ts` — reused as-is
 - All `shared/ai/*.schema.ts` — reused as-is
-- All `recommendations/*` — for saved trips only
 - `save-generated-trip.*` — already works
+
+> Nota: el plan original preveía conservar `recommendations/*` "para viajes ya guardados".
+> Ese módulo se eliminó posteriormente por ser un segundo camino de escritura que
+> duplicaba el consumo de cuota de Gemini. `save-generated` es hoy el único que persiste.
 
 ## Design Decisions
 
 1. **Option A: trip data in body** — endpoints accept full trip object, no DB dependency
 2. **departureHint for flights** — user types city name, Gemini infers IATA code
-3. **Extract prompts to shared** — avoid duplication between recommend and preview use cases
+3. **Extract prompts to shared** — avoid duplication between the generate-preview use cases
 4. **TripsController** — all generate endpoints in one controller (consistency)
 5. **No DB until save** — nothing persisted until user confirms

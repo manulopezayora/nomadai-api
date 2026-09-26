@@ -105,14 +105,15 @@ Swagger UI available at `http://localhost:3000/api` when the server is running.
 
 ### Key Endpoints
 
-| Module              | Endpoints                                                            |
-| ------------------- | -------------------------------------------------------------------- |
-| **Auth**            | `POST /auth/register`, `POST /auth/login`, `GET /auth/profile`       |
-| **Users**           | `GET /users`, `PATCH /users/:id`                                     |
-| **Trips**           | `POST /trips`, `POST /trips/generate`, CRUD + `GET /trips/admin/all` |
-| **Day Plans**       | CRUD nested under `/trips/:tripId/days`                              |
-| **Activities**      | CRUD nested under `/trips/:tripId/days/:dayId/activities`            |
-| **Recommendations** | `POST /trips/:tripId/recommend/flights`, `/hotels`, `/itinerary`     |
+| Module             | Endpoints                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| **Auth**           | `POST /auth/register`, `POST /auth/login`, `GET /auth/profile`                                                                |
+| **Users**          | `GET /users`, `PATCH /users/:id`                                                                                              |
+| **Trips**          | `POST /trips`, `POST /trips/generate`, CRUD + `GET /trips/admin/all`                                                          |
+| **Generation**     | `POST /trips/generate`, `/generate-itinerary`, `/generate-flights`, `/generate-hotels` (1 Gemini call cada uno, no persisten) |
+| **Save Generated** | `POST /trips/save-generated` (sin IA, una única transacción)                                                                  |
+| **Day Plans**      | CRUD nested under `/trips/:tripId/days`                                                                                       |
+| **Activities**     | CRUD nested under `/trips/:tripId/days/:dayId/activities`                                                                     |
 
 ## Architecture
 

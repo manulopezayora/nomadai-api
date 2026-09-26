@@ -9,7 +9,6 @@ import { TripsModule } from './infrastructure/trips/trips.module';
 import { DayPlansModule } from './infrastructure/day-plans/day-plans.module';
 import { ActivitiesModule } from './infrastructure/activities/activities.module';
 import { GeminiModule } from './infrastructure/ai/gemini.module';
-import { RecommendationsModule } from './infrastructure/recommendations/recommendations.module';
 import { envValidationSchema } from './shared/config/env.validation';
 
 @Module({
@@ -26,7 +25,6 @@ import { envValidationSchema } from './shared/config/env.validation';
     DayPlansModule,
     ActivitiesModule,
     GeminiModule,
-    RecommendationsModule,
   ],
   controllers: [],
   providers: [

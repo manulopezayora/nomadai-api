@@ -82,20 +82,28 @@ futuro, **Duffel API** es la alternativa más accesible (self-serve, sandbox gra
 
 ```
 Frontend (Vue)
-    ↓ POST /trips/:id/recommend/itinerary
-    ↓ { preferences, dates, destination }
+    ↓ POST /trips/generate
+    ↓ { prompt: "10 días en Japón, cultura y relax" }
 Backend (NestJS)
     ↓ Valida DTO
     ↓ Construye prompt con schema estructurado
     ↓
 Google Gemini API
-    ↓ Genera respuesta JSON con vuelos, hoteles, actividades
+    ↓ Genera respuesta JSON con título, destino, fechas, preferencias
     ↓
 Backend (NestJS)
     ↓ Valida respuesta contra schema
-    ↓ Guarda en PostgreSQL (con coordenadas lat/lng)
+    ↓ Devuelve preview (NO persiste)
     ↓
 Frontend (Vue)
+    ↓ POST /trips/generate-itinerary | generate-flights | generate-hotels
+    ↓ (1 call de Gemini por preview, tampoco persiste)
+    ↓ POST /trips/save-generated  (sin IA, una única transacción)
+    ↓
+PostgreSQL  ← Trip + FlightRecommendation[] + HotelRecommendation[] + DayPlan[] + Activity[]
+    ↓
+Frontend (Vue)
+    ↓ GET /trips/:id
     ↓ Muestra itinerario + mapa (Leaflet)
 ```
 
@@ -309,19 +317,19 @@ const apiClient = axios.create({
 
 ### Trips
 
-| Método | Ruta                             | Descripción                                        | Auth  |
-| ------ | -------------------------------- | -------------------------------------------------- | ----- |
-| POST   | `/trips`                         | Crear viaje                                        | Sí    |
-| POST   | `/trips/generate`                | Generar preview de viaje desde prompt (1 call IA)  | Sí    |
-| POST   | `/trips/save-generated`          | Guardar viaje generado en BD (transacción)         | Sí    |
-| GET    | `/trips`                         | Listar viajes del usuario (paginado)               | Sí    |
-| GET    | `/trips/admin/all`               | Listar todos los viajes (solo ADMIN)               | ADMIN |
-| GET    | `/trips/:id`                     | Detalle de viaje con días y actividades            | Sí    |
-| PATCH  | `/trips/:id`                     | Actualizar viaje                                   | Sí    |
-| DELETE | `/trips/:id`                     | Eliminar viaje (cascade)                           | Sí    |
-| POST   | `/trips/:id/recommend/flights`   | Generar recomendaciones de vuelos con IA (1 call)  | Sí    |
-| POST   | `/trips/:id/recommend/hotels`    | Generar recomendaciones de hoteles con IA (1 call) | Sí    |
-| POST   | `/trips/:id/recommend/itinerary` | Generar itinerario día a día con IA (1 call)       | Sí    |
+| Método | Ruta                        | Descripción                                            | Auth  |
+| ------ | --------------------------- | ------------------------------------------------------ | ----- |
+| POST   | `/trips`                    | Crear viaje                                            | Sí    |
+| POST   | `/trips/generate`           | Generar preview de viaje desde prompt (1 call IA)      | Sí    |
+| POST   | `/trips/generate-itinerary` | Generar preview de itinerario (1 call IA, no persiste) | Sí    |
+| POST   | `/trips/generate-flights`   | Generar preview de vuelos (1 call IA, no persiste)     | Sí    |
+| POST   | `/trips/generate-hotels`    | Generar preview de hoteles (1 call IA, no persiste)    | Sí    |
+| POST   | `/trips/save-generated`     | Guardar viaje generado en BD (transacción, **sin IA**) | Sí    |
+| GET    | `/trips`                    | Listar viajes del usuario (paginado)                   | Sí    |
+| GET    | `/trips/admin/all`          | Listar todos los viajes (solo ADMIN)                   | ADMIN |
+| GET    | `/trips/:id`                | Detalle de viaje con días y actividades                | Sí    |
+| PATCH  | `/trips/:id`                | Actualizar viaje                                       | Sí    |
+| DELETE | `/trips/:id`                | Eliminar viaje (cascade)                               | Sí    |
 
 ### Day Plans
 
@@ -339,13 +347,22 @@ const apiClient = axios.create({
 | PATCH  | `/trips/:tripId/days/:dayId/activities/:activityId` | Actualizar actividad    | Sí   |
 | DELETE | `/trips/:tripId/days/:dayId/activities/:activityId` | Eliminar actividad      | Sí   |
 
-### Recommendations (Gemini IA)
+### Generación con IA (Gemini)
 
-| Método | Ruta                                 | Descripción                  | Auth |
-| ------ | ------------------------------------ | ---------------------------- | ---- |
-| POST   | `/trips/:tripId/recommend/flights`   | Recomendar vuelos con IA     | Sí   |
-| POST   | `/trips/:tripId/recommend/hotels`    | Recomendar hoteles con IA    | Sí   |
-| POST   | `/trips/:tripId/recommend/itinerary` | Generar itinerario día a día | Sí   |
+El flujo de generación usa endpoints de **preview** (llaman a Gemini, no persisten) más un
+endpoint de **guardado** (no llama a Gemini, persiste todo en una transacción). Cada preview
+consume exactamente 1 llamada de Gemini.
+
+| Método | Ruta                        | Descripción                                       | Auth |
+| ------ | --------------------------- | ------------------------------------------------- | ---- |
+| POST   | `/trips/generate`           | Preview de viaje desde prompt en lenguaje natural | Sí   |
+| POST   | `/trips/generate-itinerary` | Preview de itinerario día a día                   | Sí   |
+| POST   | `/trips/generate-flights`   | Preview de vuelos                                 | Sí   |
+| POST   | `/trips/generate-hotels`    | Preview de hoteles                                | Sí   |
+
+Los endpoints legacy `POST /trips/:tripId/recommend/{flights,hotels,itinerary}` fueron
+eliminados: exigían que el viaje ya existiera en BD, escribían directamente y duplicaban
+el consumo de cuota de Gemini. Persisten únicamente con `POST /trips/save-generated`.
 
 ---
 
@@ -533,12 +550,15 @@ if (error.response?.data?.code) {
 2. POST /auth/login     →  JWT en body
 3. POST /trips/generate  →  { prompt: "10 días en Japón, cultura y relax" }
    → Gemini parsea el prompt y crea el viaje con título, destino, fechas, preferencias
-4. POST /trips/:id/recommend/flights    →  Gemini genera opciones de vuelos
-5. POST /trips/:id/recommend/hotels     →  Gemini genera opciones de hoteles
-6. POST /trips/:id/recommend/itinerary  →  Gemini genera plan completo
-   → Se guardan: DayPlan[] con Activity[] dentro (con lat/lng)
-7. GET /trips/:id        →  Ver plan completo con todos los días (dayPlans + activities anidadas)
-8. PATCH/DELETE          →  Modificar según preferencias
+4. POST /trips/generate-itinerary  →  Gemini genera el plan día a día (con coordenadas lat/lng)
+5. POST /trips/generate-flights     →  Gemini genera opciones de vuelos
+6. POST /trips/generate-hotels      →  Gemini genera opciones de hoteles
+   → Hasta aquí nada se ha guardado: el frontend tiene todos los datos en memoria
+7. POST /trips/save-generated       →  Sin IA. Una transacción guarda:
+   → Trip + FlightRecommendation[] + HotelRecommendation[] + DayPlan[] + Activity[]
+   → `flights`, `hotels` e `itinerary` son opcionales
+8. GET /trips/:id        →  Ver plan completo con todos los días (dayPlans + activities anidadas)
+9. PATCH/DELETE          →  Modificar según preferencias
 ```
 
 ---
@@ -668,10 +688,12 @@ nomadai-api/
 │   │   │   │   ├── create-activity.use-case.ts
 │   │   │   │   ├── update-activity.use-case.ts
 │   │   │   │   └── delete-activity.use-case.ts
-│   │   │   └── recommendations/
-│   │   │       ├── recommend-flights.use-case.ts
-│   │   │       ├── recommend-hotels.use-case.ts
-│   │   │       └── recommend-itinerary.use-case.ts
+│   │   │   ├── trips/
+│   │   │   │   ├── generate-trip.use-case.ts
+│   │   │   │   ├── generate-itinerary-preview.use-case.ts
+│   │   │   │   ├── generate-flights-preview.use-case.ts
+│   │   │   │   ├── generate-hotels-preview.use-case.ts
+│   │   │   │   └── save-generated-trip.use-case.ts
 │   │   └── dto/                 # DTOs de entrada/salida
 │   │       ├── register.dto.ts
 │   │       ├── login.dto.ts
@@ -679,14 +701,17 @@ nomadai-api/
 │   │       ├── update-user.dto.ts
 │   │       ├── create-trip.dto.ts
 │   │       ├── generate-trip.dto.ts
+│   │       ├── generated-trip-data.dto.ts
+│   │       ├── generate-itinerary.dto.ts
+│   │       ├── generate-flights.dto.ts
+│   │       ├── generate-hotels.dto.ts
+│   │       ├── save-generated-trip.dto.ts
 │   │       ├── update-trip.dto.ts
 │   │       ├── pagination.dto.ts
 │   │       ├── create-day-plan.dto.ts
 │   │       ├── update-day-plan.dto.ts
 │   │       ├── create-activity.dto.ts
-│   │       ├── update-activity.dto.ts
-│   │       ├── recommend-flights.dto.ts
-│   │       └── recommend-hotels.dto.ts
+│   │       └── update-activity.dto.ts
 │   │
 │   ├── infrastructure/          # ADAPTADORES (implementa puertos)
 │   │   ├── database/
@@ -704,9 +729,7 @@ nomadai-api/
 │   │   │       ├── prisma-user.repository.ts
 │   │   │       ├── prisma-trip.repository.ts
 │   │   │       ├── prisma-day-plan.repository.ts
-│   │   │       ├── prisma-activity.repository.ts
-│   │   │       ├── prisma-flight-recommendation.repository.ts
-│   │   │       └── prisma-hotel-recommendation.repository.ts
+│   │   │       └── prisma-activity.repository.ts
 │   │   ├── ai/
 │   │   │   ├── gemini.module.ts
 │   │   │   └── gemini.service.ts
@@ -721,10 +744,8 @@ nomadai-api/
 │   │   │   └── trips.module.ts
 │   │   ├── day-plans/
 │   │   │   └── day-plans.module.ts
-│   │   ├── activities/
-│   │   │   └── activities.module.ts
-│   │   └── recommendations/
-│   │       └── recommendations.module.ts
+│   │   └── activities/
+│   │       └── activities.module.ts
 │   │
 │   ├── presentation/            # ADAPTADOR DE ENTRADA (HTTP)
 │   │   ├── controllers/
@@ -732,8 +753,7 @@ nomadai-api/
 │   │   │   ├── users.controller.ts
 │   │   │   ├── trips.controller.ts
 │   │   │   ├── day-plans.controller.ts
-│   │   │   ├── activities.controller.ts
-│   │   │   └── recommendations.controller.ts
+│   │   │   └── activities.controller.ts
 │   │   ├── guards/
 │   │   │   └── roles.guard.ts
 │   │   ├── decorators/
@@ -780,8 +800,6 @@ nomadai-api/
 │   │   ├── day-plan-repository.mock.ts
 │   │   ├── activity.factory.ts
 │   │   ├── activity-repository.mock.ts
-│   │   ├── flight-recommendation-repository.mock.ts
-│   │   ├── hotel-recommendation-repository.mock.ts
 │   │   └── gemini-service.mock.ts
 │   └── jest-e2e.json
 │
@@ -869,9 +887,15 @@ Database
 - `POST /trips/:tripId/days/:dayId/activities` — Crear actividad (solo propietario)
 - `PATCH /trips/:tripId/days/:dayId/activities/:activityId` — Actualizar actividad (solo propietario)
 - `DELETE /trips/:tripId/days/:dayId/activities/:activityId` — Eliminar actividad (solo propietario)
-- `POST /trips/:tripId/recommend/flights` — Generar recomendaciones de vuelos con IA (schema extendido)
-- `POST /trips/:tripId/recommend/hotels` — Generar recomendaciones de hoteles con IA (schema extendido)
-- `POST /trips/:tripId/recommend/itinerary` — Generar itinerario día a día con IA
+- `POST /trips/generate` — Preview de viaje desde prompt natural (1 call IA, no persiste)
+- `POST /trips/generate-itinerary` — Preview de itinerario (1 call IA, no persiste)
+- `POST /trips/generate-flights` — Preview de vuelos (1 call IA, no persiste)
+- `POST /trips/generate-hotels` — Preview de hoteles (1 call IA, no persiste)
+- `POST /trips/save-generated` — Guardar todo en una transacción (sin IA)
+
+Los endpoints legacy `POST /trips/:tripId/recommend/{flights,hotels,itinerary}` se eliminaron.
+Los mappers de `FlightRecommendation` y `HotelRecommendation` se conservan porque
+`save-generated` los usa para persistir.
 
 **Hardening completado:**
 

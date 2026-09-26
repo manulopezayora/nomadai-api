@@ -1,5 +1,15 @@
 # Plan: Trip Generation Flow — Option C (RPM-Optimized)
 
+> **STATUS: SUPERSEDED — documento histórico, no refleja la implementación actual.**
+>
+> La "Opción C" descrita abajo NO fue la elegida. Se implementó en su lugar
+> [`PLAN-GENERATE-PREVIEW-FLOW.md`](./PLAN-GENERATE-PREVIEW-FLOW.md).
+>
+> Los endpoints `POST /api/trips/:id/recommend/{flights,hotels,itinerary}` que se describen
+> en "Current State" **ya no existen**: fueron eliminados por duplicar el flujo de preview y
+> por escribir directamente en BD. Persisten solo con `POST /api/trips/save-generated`.
+> Ver el flujo vigente en [ARCHITECTURE.md](./ARCHITECTURE.md).
+
 ## Problem (2026-09-15)
 
 Gemini free tier allows **5 RPM**. The previous implementation (`POST /trips/generate`) made **4 parallel Gemini calls** (trip + flights + hotels + itinerary), consuming 4 RPM per request. This meant the user could only generate once per minute, and hitting it twice caused 503 errors.
@@ -157,10 +167,25 @@ Tab "Itinerario" → POST /api/trips/:tripId/recommend/itinerary → shows itine
 - `src/application/dto/save-generated-trip.dto.ts` ✅
 - `src/application/use-cases/trips/save-generated-trip.use-case.ts` ✅
 - `src/application/use-cases/trips/save-generated-trip.use-case.spec.ts` ✅
-- `src/presentation/controllers/recommendations.controller.ts` ✅
-- `src/application/use-cases/recommendations/recommend-flights.use-case.ts` ✅
-- `src/application/use-cases/recommendations/recommend-hotels.use-case.ts` ✅
-- `src/application/use-cases/recommendations/recommend-itinerary.use-case.ts` ✅
+
+### Files removed after this plan was written
+
+Este plan asumía que los endpoints `recommend/*` se quedaban. Ya no existen:
+
+- `src/presentation/controllers/recommendations.controller.ts` — eliminado
+- `src/application/use-cases/recommendations/recommend-flights.use-case.ts` — eliminado
+- `src/application/use-cases/recommendations/recommend-hotels.use-case.ts` — eliminado
+- `src/application/use-cases/recommendations/recommend-itinerary.use-case.ts` — eliminado
+- `src/application/dto/recommend-flights.dto.ts` — eliminado
+- `src/application/dto/recommend-hotels.dto.ts` — eliminado
+- `src/infrastructure/recommendations/recommendations.module.ts` — eliminado
+- `src/infrastructure/database/repositories/prisma-flight-recommendation.repository.ts` — eliminado
+- `src/infrastructure/database/repositories/prisma-hotel-recommendation.repository.ts` — eliminado
+- `test/mocks/flight-recommendation-repository.mock.ts` — eliminado
+- `test/mocks/hotel-recommendation-repository.mock.ts` — eliminado
+
+Se conservan a propósito las entidades, puertos, schemas y mappers de `FlightRecommendation` y
+`HotelRecommendation`: `save-generated` los usa para persistir.
 
 ## Status
 

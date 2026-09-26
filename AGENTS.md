@@ -78,10 +78,12 @@ src/
 │   │   │   ├── create-activity.use-case.ts
 │   │   │   ├── update-activity.use-case.ts
 │   │   │   └── delete-activity.use-case.ts
-│   │   └── recommendations/
-│   │       ├── recommend-flights.use-case.ts
-│   │       ├── recommend-hotels.use-case.ts
-│   │       └── recommend-itinerary.use-case.ts
+│   │   └── trips/
+│   │       ├── generate-trip.use-case.ts
+│   │       ├── generate-itinerary-preview.use-case.ts
+│   │       ├── generate-flights-preview.use-case.ts
+│   │       ├── generate-hotels-preview.use-case.ts
+│   │       └── save-generated-trip.use-case.ts
 │   └── dto/                         # DTOs de entrada/salida de casos de uso
 │       ├── register.dto.ts
 │       ├── login.dto.ts
@@ -89,6 +91,11 @@ src/
 │       ├── update-trip.dto.ts
 │       ├── pagination.dto.ts
 │       ├── safe-user.dto.ts
+│       ├── generated-trip-data.dto.ts
+│       ├── generate-itinerary.dto.ts
+│       ├── generate-flights.dto.ts
+│       ├── generate-hotels.dto.ts
+│       ├── save-generated-trip.dto.ts
 │       ├── create-day-plan.dto.ts
 │       ├── update-day-plan.dto.ts
 │       ├── create-activity.dto.ts
@@ -134,7 +141,6 @@ src/
 │   │   ├── trips.controller.ts
 │   │   ├── day-plans.controller.ts
 │   │   ├── activities.controller.ts
-│   │   └── recommendations.controller.ts
 │   ├── interceptors/                # Interceptors
 │   │   └── gemini-exception.interceptor.ts
 │   └── filters/                     # Filtros de excepción
